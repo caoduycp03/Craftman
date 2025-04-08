@@ -1,4 +1,4 @@
-#### Important: we released [CraftsMan3D-DoraVAE](https://aruichen.github.io/Dora/) trained using rectified flow.
+#### Important: we released [CraftsMan3D-DoraVAE](https://aruichen.github.io/Dora/) trained using rectified flow. (is still converting and uploading the weights...)
 
 [中文版](README_zh.md)
 <p align="center">
