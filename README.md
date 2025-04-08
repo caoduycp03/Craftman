@@ -1,20 +1,5 @@
 #### Important: we released [CraftsMan3D-DoraVAE](https://aruichen.github.io/Dora/) trained using rectified flow.
 
-# 💪 ToDo List
-
-- [x] Inference code
-- [x] Training code
-- [x] Gradio & Hugging Face demo
-- [x] Model zoo
-- [x] Environment setup
-- [x] Data sample
-- [x] CraftsMan3D-DoraVAE
-- [x] support rectified flow training
-- [ ] release multiview(4 views) conditioned model (including weights and training data sample) 
-- [ ] add data sample for vae training
-- [ ] support training and finetuning TripoSG model (almost done)
-- [ ] support training Hunyuan3D-2 model(it is not release the weights for vae encoder)
-
 [中文版](README_zh.md)
 <p align="center">
   <img src="asset/logo.png"  height=220>
@@ -68,6 +53,21 @@ We present a novel generative 3D modeling system, coined CraftsMan, which can ge
 <p align="center">
   <img src="asset/teaser.jpg" >
 </p>
+
+# 💪 ToDo List
+
+- [x] Inference code
+- [x] Training code
+- [x] Gradio & Hugging Face demo
+- [x] Model zoo
+- [x] Environment setup
+- [x] Data sample
+- [x] CraftsMan3D-DoraVAE
+- [x] support rectified flow training
+- [ ] release multiview(4 views) conditioned model (including weights and training data sample) 
+- [ ] add data sample for vae training
+- [ ] support training and finetuning TripoSG model (almost done)
+- [ ] support training Hunyuan3D-2 model(it is not release the weights for vae encoder)
 
 
 ## Contents
