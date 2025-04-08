@@ -9,7 +9,6 @@ from craftsman.utils.checkpoint import checkpoint
 from .utils import init_linear, MLP
 from timm.models.vision_transformer import Attention
 
-
 class MultiheadAttention(nn.Module):
     def __init__(
         self,
@@ -19,6 +18,8 @@ class MultiheadAttention(nn.Module):
         heads: int,
         init_scale: float,
         qkv_bias: bool,
+        qk_norm: bool = False,
+        norm_layer=nn.LayerNorm,
         use_flash: bool = False
     ):
         super().__init__()
@@ -27,7 +28,14 @@ class MultiheadAttention(nn.Module):
         self.heads = heads
         self.c_qkv = nn.Linear(width, width * 3, bias=qkv_bias)
         self.c_proj = nn.Linear(width, width)
-        self.attention = QKVMultiheadAttention(heads=heads, n_ctx=n_ctx, use_flash=use_flash)
+        self.attention = QKVMultiheadAttention(
+            heads=heads, 
+            n_ctx=n_ctx, 
+            width=width, 
+            norm_layer=norm_layer, 
+            qk_norm=qk_norm, 
+            use_flash=use_flash
+        )
         init_linear(self.c_qkv, init_scale)
         init_linear(self.c_proj, init_scale)
 
@@ -39,11 +47,14 @@ class MultiheadAttention(nn.Module):
 
 
 class QKVMultiheadAttention(nn.Module):
-    def __init__(self, *, heads: int, n_ctx: int, use_flash: bool = False):
+    def __init__(self, *, heads: int, n_ctx: int, width=None, qk_norm: bool = False, norm_layer=nn.LayerNorm, use_flash: bool = False):
         super().__init__()
         self.heads = heads
         self.n_ctx = n_ctx
         self.use_flash = use_flash
+
+        self.q_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
+        self.k_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
 
     def forward(self, qkv):
         bs, n_ctx, width = qkv.shape
@@ -52,6 +63,9 @@ class QKVMultiheadAttention(nn.Module):
         qkv = qkv.view(bs, n_ctx, self.heads, -1)
         q, k, v = torch.split(qkv, attn_ch, dim=-1)
 
+        q = self.q_norm(q)
+        k = self.k_norm(k)
+        
         if self.use_flash:
             q = q.permute(0, 2, 1, 3)
             k = k.permute(0, 2, 1, 3)
@@ -67,6 +81,7 @@ class QKVMultiheadAttention(nn.Module):
 
         return out
 
+
 class ResidualAttentionBlock(nn.Module):
     def __init__(
         self,
@@ -76,6 +91,8 @@ class ResidualAttentionBlock(nn.Module):
         heads: int,
         init_scale: float = 1.0,
         qkv_bias: bool = True,
+        norm_layer=nn.LayerNorm,
+        qk_norm: bool = False,
         use_flash: bool = False,
         use_checkpoint: bool = False
     ):
@@ -89,6 +106,8 @@ class ResidualAttentionBlock(nn.Module):
             heads=heads,
             init_scale=init_scale,
             qkv_bias=qkv_bias,
+            norm_layer=norm_layer,
+            qk_norm=qk_norm,
             use_flash=use_flash
         )
         self.ln_1 = nn.LayerNorm(width)
@@ -112,6 +131,8 @@ class MultiheadCrossAttention(nn.Module):
         heads: int,
         init_scale: float,
         qkv_bias: bool = True,
+        norm_layer=nn.LayerNorm,
+        qk_norm: bool = False,
         use_flash: bool = False,
         n_data: Optional[int] = None,
         data_width: Optional[int] = None,
@@ -125,7 +146,7 @@ class MultiheadCrossAttention(nn.Module):
         self.c_kv = nn.Linear(self.data_width, width * 2, bias=qkv_bias)
         self.c_proj = nn.Linear(width, width)
         self.attention = QKVMultiheadCrossAttention(
-            heads=heads, n_data=n_data, use_flash=use_flash
+            heads=heads, n_data=n_data, width=width, norm_layer=norm_layer, qk_norm=qk_norm, use_flash=use_flash
         )
         init_linear(self.c_q, init_scale)
         init_linear(self.c_kv, init_scale)
@@ -140,12 +161,15 @@ class MultiheadCrossAttention(nn.Module):
 
 
 class QKVMultiheadCrossAttention(nn.Module):
-    def __init__(self, *, heads: int, use_flash: bool = False, n_data: Optional[int] = None):
+    def __init__(self, *, heads: int, n_data: Optional[int] = None, width=None, norm_layer=nn.LayerNorm, qk_norm: bool = False, use_flash: bool = False):
 
         super().__init__()
         self.heads = heads
         self.n_data = n_data
         self.use_flash = use_flash
+        
+        self.q_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
+        self.k_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
 
     def forward(self, q, kv):
         _, n_ctx, _ = q.shape
@@ -156,8 +180,10 @@ class QKVMultiheadCrossAttention(nn.Module):
         kv = kv.view(bs, n_data, self.heads, -1)
         k, v = torch.split(kv, attn_ch, dim=-1)
 
+        q = self.q_norm(q)
+        k = self.k_norm(k)
+
         if self.use_flash:
-            
             q = q.permute(0, 2, 1, 3)
             k = k.permute(0, 2, 1, 3)
             v = v.permute(0, 2, 1, 3)
@@ -183,6 +209,7 @@ class ResidualCrossAttentionBlock(nn.Module):
         data_width: Optional[int] = None,
         init_scale: float = 0.25,
         qkv_bias: bool = True,
+        qk_norm: bool = False,
         use_flash: bool = False
     ):
         super().__init__()
@@ -197,6 +224,7 @@ class ResidualCrossAttentionBlock(nn.Module):
             data_width=data_width,
             init_scale=init_scale,
             qkv_bias=qkv_bias,
+            qk_norm=qk_norm,
             use_flash=use_flash,
         )
         self.ln_1 = nn.LayerNorm(width)

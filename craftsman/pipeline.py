@@ -106,12 +106,11 @@ class CraftsManPipeline():
         preprocessed_images = []
         for i in range(len(images_pil)):
             image = images_pil[i]
+            width, height, size = image.width, image.height, image.size
             do_remove = True
             if image.mode == "RGBA" and image.getextrema()[3][0] < 255:
                 # explain why current do not rm bg
-                print("alhpa channl not enpty, skip remove background, using alpha channel as mask")
-                background = PIL.Image.new("RGBA", image.size, (*background_color, 0))
-                image = PIL.Image.alpha_composite(background, image)
+                print("alhpa channl not empty, skip remove background, using alpha channel as mask")
                 do_remove = False
             do_remove = do_remove or force
             if do_remove:
@@ -119,26 +118,42 @@ class CraftsManPipeline():
 
             # calculate the min bbox of the image
             alpha = image.split()[-1]
+            bboxs = alpha.getbbox()
+            x1, y1, x2, y2 = bboxs
+            dy, dx = y2 - y1, x2 - x1
+            s = min(height * foreground_ratio / dy, width * foreground_ratio / dx)
+            Ht, Wt = int(dy * s), int(dx * s)
+            
+            background = PIL.Image.new("RGBA", image.size, (*background_color, 255))
+            image = PIL.Image.alpha_composite(background, image)
             image = image.crop(alpha.getbbox())
+            alpha = alpha.crop(alpha.getbbox())
 
             # Calculate the new size after rescaling
-            new_size = tuple(int(dim * foreground_ratio) for dim in image.size)
+            new_size = tuple(int(dim * foreground_ratio) for dim in size)
             # Resize the image while maintaining the aspect ratio
-            resized_image = image.resize(new_size)
+            resized_image = image.resize((Wt, Ht))
+            resized_alpha = alpha.resize((Wt, Ht))
             # Create a new image with the original size and white background
-            padded_image = PIL.Image.new("RGBA", image.size, (*background_color, 0))
-            paste_position = ((image.width - resized_image.width) // 2, (image.height - resized_image.height) // 2)
+            padded_image = PIL.Image.new("RGB", size, tuple(background_color))
+            padded_alpha = PIL.Image.new("L", size, (0))
+            paste_position = ((width - resized_image.width) // 2, (height - resized_image.height) // 2)
             padded_image.paste(resized_image, paste_position)
+            padded_alpha.paste(resized_alpha, paste_position)
 
             # expand image to 1:1
             width, height = padded_image.size
             if width == height:
+                padded_image.putalpha(padded_alpha)
                 preprocessed_images.append(padded_image)
                 continue
             new_size = (max(width, height), max(width, height))
-            new_image = PIL.Image.new("RGBA", new_size, (*background_color, 1))
+            new_image = PIL.Image.new("RGB", new_size, tuple(background_color))
+            new_alpha = PIL.Image.new("L", new_size, (0))
             paste_position = ((new_size[0] - width) // 2, (new_size[1] - height) // 2)
             new_image.paste(padded_image, paste_position)
+            new_alpha.paste(padded_alpha, paste_position)
+            new_image.putalpha(new_alpha)
             preprocessed_images.append(new_image)
 
         return preprocessed_images
@@ -271,6 +286,14 @@ class CraftsManPipeline():
                             bbox.append((bbmax - bbmin).max())
                         max_component = np.argmax(bbox)
                         cur_mesh = components[max_component]
+                    cur_mesh.fix_normals() 
+                    cur_mesh.face_normals 
+                    cur_mesh.vertex_normals 
+                    cur_mesh.visual = trimesh.visual.TextureVisuals(
+                        material=trimesh.visual.material.PBRMaterial(
+                            baseColorFactor=(255, 255, 255), main_color=(255, 255, 255), metallicFactor=0.05, roughnessFactor=1.0
+                        )
+                    )
                     mesh.append(cur_mesh)
                 elif output_type == "np":
                     mesh.append(mesh_v_f[0])

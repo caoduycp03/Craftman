@@ -170,4 +170,5 @@ archive
 /.vscode
 *.sh
 .gradio
-/data
+data
+!data/validation

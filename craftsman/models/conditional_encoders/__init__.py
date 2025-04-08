@@ -1,3 +1,4 @@
 from . import (
-    cond_encoder
+    clip_dinov2_encoder,
+    dinov2_encoder
 )

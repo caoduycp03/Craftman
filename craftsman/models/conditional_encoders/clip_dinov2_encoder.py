@@ -18,8 +18,8 @@ from craftsman.utils.typing import *
 from .clip.modeling_clip import CLIPModel
 from .clip.modeling_conditional_clip import ConditionalCLIPModel
 from .base import BaseEmbedder, ImageType
-from .dino_v2.modeling_dinov2 import Dinov2Model
-from .dino_v2.modeling_conditional_dinov2 import ConditionalDinov2Model
+from .dinov2.modeling_dinov2 import Dinov2Model
+from .dinov2.modeling_conditional_dinov2 import ConditionalDinov2Model
 
 @dataclass
 class CLIPEmbedOutput(ModelOutput):
@@ -31,8 +31,8 @@ class DINOEmbedOutput(ModelOutput):
     last_hidden_state: torch.FloatTensor = None
     pooler_output: torch.FloatTensor = None
         
-@craftsman.register("cond-embedder")
-class CondEmbedder(BaseEmbedder):
+@craftsman.register("clip-dinov2-embedder")
+class ClipDinoEmbedder(BaseEmbedder):
 
     @dataclass
     class Config(BaseEmbedder.Config):
@@ -168,7 +168,9 @@ class CondEmbedder(BaseEmbedder):
 
         if self.cfg.pretrained_model_name_or_path is not None:
             print(f"Loading ckpt from {self.cfg.pretrained_model_name_or_path}")
-            ckpt = torch.load(self.cfg.pretrained_model_name_or_path, map_location="cpu")['state_dict']
+            ckpt = torch.load(self.cfg.pretrained_model_name_or_path, map_location="cpu")
+            if 'state_dict' in ckpt:
+                ckpt = ckpt['state_dict']
             pretrained_model_ckpt = {}
             for k, v in ckpt.items():
                 if k.startswith('condition.'):

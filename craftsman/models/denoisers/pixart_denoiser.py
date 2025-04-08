@@ -30,6 +30,7 @@ class PixArtDinoDenoiser(BaseModule):
         drop_path: float = 0.
         clip_weight: float = 1.0
         dino_weight: float = 1.0
+        condition_type: str = "clip_dinov2"
 
     cfg: Config
 
@@ -44,18 +45,22 @@ class PixArtDinoDenoiser(BaseModule):
 
         # context embedding
         if self.cfg.context_ln:
-            self.clip_embed = nn.Sequential(
-                nn.LayerNorm(self.cfg.context_dim),
-                nn.Linear(self.cfg.context_dim, self.cfg.width),
-            )
+            if "clip" in self.cfg.condition_type:
+                self.clip_embed = nn.Sequential(
+                    nn.LayerNorm(self.cfg.context_dim),
+                    nn.Linear(self.cfg.context_dim, self.cfg.width),
+                )
 
-            self.dino_embed = nn.Sequential(
-                nn.LayerNorm(self.cfg.context_dim),
-                nn.Linear(self.cfg.context_dim, self.cfg.width),
-            )
+            if "dino" in self.cfg.condition_type:
+                self.dino_embed = nn.Sequential(
+                    nn.LayerNorm(self.cfg.context_dim),
+                    nn.Linear(self.cfg.context_dim, self.cfg.width),
+                )
         else:
-            self.clip_embed = nn.Linear(self.cfg.context_dim, self.cfg.width)
-            self.dino_embed = nn.Linear(self.cfg.context_dim, self.cfg.width)
+            if "clip" in self.cfg.condition_type:
+                self.clip_embed = nn.Linear(self.cfg.context_dim, self.cfg.width)
+            if "dino" in self.cfg.condition_type:
+                self.dino_embed = nn.Linear(self.cfg.context_dim, self.cfg.width)
 
         init_scale = self.cfg.init_scale * math.sqrt(1.0 / self.cfg.width)
         drop_path = [x.item() for x in torch.linspace(0, self.cfg.drop_path, self.cfg.layers)]
@@ -83,7 +88,9 @@ class PixArtDinoDenoiser(BaseModule):
 
         if self.cfg.pretrained_model_name_or_path:
             print(f"Loading pretrained model from {self.cfg.pretrained_model_name_or_path}")
-            ckpt = torch.load(self.cfg.pretrained_model_name_or_path, map_location="cpu")['state_dict']
+            ckpt = torch.load(self.cfg.pretrained_model_name_or_path, map_location="cpu")
+            if 'state_dict' in ckpt:
+                ckpt = ckpt['state_dict']
             self.denoiser_ckpt = {}
             for k, v in ckpt.items():
                 if k.startswith('denoiser_model.'):
@@ -122,10 +129,19 @@ class PixArtDinoDenoiser(BaseModule):
 
         # 2. conditions projector
         context = context.view(B, self.cfg.n_views, -1, self.cfg.context_dim)
-        clip_feat, dino_feat = context.chunk(2, dim=2)
-        clip_cond = self.clip_embed(clip_feat.contiguous().view(B, -1, self.cfg.context_dim))
-        dino_cond = self.dino_embed(dino_feat.contiguous().view(B, -1, self.cfg.context_dim))
-        visual_cond = self.cfg.clip_weight * clip_cond + self.cfg.dino_weight * dino_cond
+        if self.cfg.condition_type == "clip_dinov2":
+            clip_feat, dino_feat = context.chunk(2, dim=2)
+            clip_cond = self.clip_embed(clip_feat.contiguous().view(B, -1, self.cfg.context_dim))
+            dino_cond = self.dino_embed(dino_feat.contiguous().view(B, -1, self.cfg.context_dim))
+            visual_cond = self.cfg.clip_weight * clip_cond + self.cfg.dino_weight * dino_cond
+        elif self.cfg.condition_type == "clip":
+            clip_cond = self.clip_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
+            visual_cond = clip_cond
+        elif self.cfg.condition_type == "dinov2":
+            dino_cond = self.dino_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
+            visual_cond = dino_cond
+        else:
+            raise NotImplementedError(f"condition type {self.cfg.condition_type} not implemented")
 
         # 4. denoiser
         latent = self.x_embed(model_input)

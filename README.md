@@ -1,4 +1,19 @@
-#### Important: we will release CraftsMan3D-DoraVAE today, which is a more powerful version.
+#### Important: we released [CraftsMan3D-DoraVAE](https://aruichen.github.io/Dora/) trained using rectified flow.
+
+# 💪 ToDo List
+
+- [x] Inference code
+- [x] Training code
+- [x] Gradio & Hugging Face demo
+- [x] Model zoo
+- [x] Environment setup
+- [x] Data sample
+- [x] CraftsMan3D-DoraVAE
+- [x] support rectified flow training
+- [ ] release multiview(4 views) conditioned model (including weights and training data sample) 
+- [ ] add data sample for vae training
+- [ ] support training and finetuning TripoSG model (almost done)
+- [ ] support training Hunyuan3D-2 model(it is not release the weights for vae encoder)
 
 [中文版](README_zh.md)
 <p align="center">
@@ -10,9 +25,8 @@
 #####  <p align="center"> <sup>1</sup>HKUST, <sup>2</sup>LightIllusions, <sup>3</sup>Adobe Research</p>
 <div align="center">
   <a href="https://craftsman3d.github.io/"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Github&color=blue&logo=github-pages"></a> &ensp;
-  <a href="https://huggingface.co/spaces/wyysf/CraftsMan"><img src="https://www.gradio.app/_app/immutable/assets/gradio.CHB5adID.svg" height="25"/>(HF)</a> &ensp;
-  <a href="http://143.89.144.14/"><img src="asset/icon.png" height="25"/>(Local Demo)</a> &ensp;
-  <a href="http://algodemo.bj.lightions.top:24926"><img src="https://www.gradio.app/_app/immutable/assets/gradio.CHB5adID.svg" height="25"/>(Local_bak)</a> &ensp;
+  <a href="https://huggingface.co/spaces/wyysf/CraftsMan"><img src="https://www.gradio.app/_app/immutable/assets/gradio.CHB5adID.svg" height="25"/></a> &ensp;
+  <a href="https://triverse.lightillusions.com/"><img src="asset/icon.png" height="25"/>Local Website</a> &ensp;
   <a href="https://arxiv.org/pdf/2405.14979"><img src="https://img.shields.io/static/v1?label=Paper&message=Arxiv&color=red&logo=arxiv"></a> &ensp;
 </div>
 
@@ -23,10 +37,10 @@ from craftsman import CraftsManPipeline
 import torch
 
 # load from local ckpt
-# pipeline = CraftsManPipeline.from_pretrained("./ckpts/craftsman", device="cuda:0", torch_dtype=torch.float32) 
+# pipeline = CraftsManPipeline.from_pretrained("./ckpts/craftsman-DoraVAE", device="cuda:0", torch_dtype=torch.bfloat16) 
 
 # load from huggingface model hub
-pipeline = CraftsManPipeline.from_pretrained("craftsman3d/craftsman", device="cuda:0", torch_dtype=torch.float32)
+pipeline = CraftsManPipeline.from_pretrained("craftsman3d/craftsman-DoraVAE", device="cuda:0", torch_dtype=torch.bfloat16)
 
 # inference
 mesh = pipeline("https://pub-f9073a756ec645d692ce3d171c2e1232.r2.dev/data/werewolf.png").meshes[0]
@@ -80,8 +94,8 @@ The mesh refinement part is performed on a GTX 3080 GPU.
 :smiley: We also provide a Dockerfile for easy installation, see [Setup using Docker](./docker/README.md).
 
  - Python 3.10.0
- - PyTorch 2.1.0
- - Cuda Toolkit 11.8.0
+ - PyTorch 2.3.0
+ - Cuda Toolkit 12.1.0
  - Ubuntu 22.04
 
 Clone this repository.
@@ -95,12 +109,24 @@ Install the required packages.
 ```sh
 conda create -n CraftsMan python=3.10 -y
 conda activate CraftsMan
-conda install cudatoolkit=11.8 -c pytorch -y
-pip install torch==2.3.0 torchvision==0.18.0 
+conda install -c "nvidia/label/cuda-12.1.1" cudatoolkit
+# conda install -y pytorch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 -c pytorch -c nvidia
+pip install -y pytorch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1
 pip install -r docker/requirements.txt
+pip install torch-cluster -f https://data.pyg.org/whl/torch-2.3.1+cu121.html
+
 ```
 
 </details>
+
+
+## ✨ History
+
+This repo will port some recent techniques for 3D diffusion model and the history version like the arxiv version can be found in different branch.
+
+<p align="center">
+  <img src="asset/history.png" >
+</p>
 
 
 # 🎥 Video
@@ -121,12 +147,24 @@ If you run the ``inference.py`` without specifying the model path, it will autom
 Or you can download the model manually:
 ```bash
 ## you can just manually get the model using wget:
+mkdir ckpts
+cd ckpts
+mkdir craftsman-v1-5
+cd craftsman-v1-5
 wget https://huggingface.co/craftsman3d/craftsman/resolve/main/config.yaml
 wget https://huggingface.co/craftsman3d/craftsman/resolve/main/model.ckpt
+### for DoraVAE version(https://aruichen.github.io/Dora/)
+cd ..
+mkdir craftsman-doravae
+cd craftsman-doravae
+wget https://huggingface.co/craftsman3d/craftsman-doravae/resolve/main/config.yaml
+wget https://huggingface.co/craftsman3d/craftsman-doravae/resolve/main/model.ckpt
 
-## or you can git clone the repo:
+## OR you can git clone the repo:
 git lfs install
 git clone https://huggingface.co/craftsman3d/craftsman
+### for DoraVAE version(https://aruichen.github.io/Dora/)
+git clone https://huggingface.co/craftsman3d/craftsman-doravae
 
 ```
 If you download the models using wget, you should manually put them under the `ckpts/craftsman` directory.
@@ -148,9 +186,9 @@ For more configs, please refer to the `inference.py`.
 
 ## Train from scratch
 We provide our training code to facilitate future research. And we provide a data sample in `data`.
-100k data sample can be downloaded from https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/Objaverse_100k.zip
-
-*Due to the costs associated with data deployment. If you could help share our work on social media in any form, we would be grateful. As a token of our appreciation, you will receive download links to exclusive content stored on AWS S3, which can achieve download speeds of 20-100 MB/s.*
+100k data sample for VAE training can be downloaded from (to be uploaded)
+100k data sample for diffusion training can be downloaded from https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/Objaverse_100k.zip
+selected UUID for training can be downloaded from https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/UUID.txt
 
 For more training details and configs, please refer to the `configs` folder.
 
@@ -160,16 +198,17 @@ python train.py --config ./configs/shape-autoencoder/michelangelo-l768-e64-ne8-n
                  --train --gpu 0
 
 ### training the image-to-shape diffusion model
-python train.py --config .configs/image-to-shape-diffusion/clip-dino-rgb-pixart-lr2e4-ddim.yaml \
-                 --train --gpu 0
+# for single view conditioned generation
+python train.py --config ./configs/image-to-shape-diffusion/clip-dinov2-pixart-diffusion-dit32.yaml --train --gpu 0
+
+# for multi view conditioned generation (original paper)
+python train.py --config ./configs/image-to-shape-diffusion/clip-mvrgb-modln-l256-e64-ne8-nd16-nl6.yaml --train --gpu 0
+
+# for DoraVAE single view diffusion version (We can not provide the data for you due to the license issue, you can processed it by yourself)
+# (https://github.com/Seed3D/Dora/tree/main/sharp_edge_sampling)
+python train.py --config ./configs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32.yaml --train --gpu 0
 
 ```
-
-# 2D Normal Enhancement Diffusion Model (TBA)
-
-We are diligently working on the release of our mesh refinement code. Your patience is appreciated as we put the final touches on this exciting development." 🔧🚀
-
-You can also find the video of mesh refinement part in the video.
 
 
 # ❓Common questions
@@ -177,17 +216,6 @@ Q: Tips to get better results.
 0. Due to limited resources, we will gradually expand the dataset and training scale, and therefore we will release more pre-trained models in the future.
 1. Just like the 2D diffusion model, try different seeds, adjust the CFG scale or different scheduler. Good Luck.
 2. We will provide a version that conditioned on the text prompt, so you can use some positive and negative prompts.
-
-
-# 💪 ToDo List
-
-- [x] Inference code
-- [x] Training code
-- [x] Gradio & Hugging Face demo
-- [x] Model zoo, we will release more ckpt in the future
-- [x] Environment setup
-- [x] Data sample
-- [ ] Code for mesh refine
 
 
 # 🤗 Acknowledgements
@@ -200,16 +228,17 @@ Q: Tips to get better results.
 - Thanks to [Objaverse](https://objaverse.allenai.org/), [Objaverse-MIX](https://huggingface.co/datasets/BAAI/Objaverse-MIX/tree/main) for their open-sourced data, which help us to do many validation experiments.
 - Thanks to [ThreeStudio](https://github.com/threestudio-project/threestudio) for their great repo, we follow their fantastic and easy-to-use code structure!
 - Thanks to [Direct3D](https://github.com/DreamTechAI/Direct3D) especially [Shuang Wu](https://scholar.google.it/citations?user=SN8J78EAAAAJ&hl=zh-CN) for providing their results.
+- Thanks to [TripoSG](https://github.com/VAST-AI-Research/TripoSG) and [Hunyuan3D-2](https://github.com/Tencent/Hunyuan3D-2) for their open-source, we adapted our code to support loading their weights, training, and fine-tuning.
 
 
 # 📑License
-CraftsMan shares the same license with the SD15, which is under [creativeml-openrail-m](https://raw.githubusercontent.com/CompVis/stable-diffusion/refs/heads/main/LICENSE). If you have any questions about the usage of CraftsMan, please contact us first.
+CraftsMan3D is under MIT License. 
 
 
 # 📖 BibTeX
 
     @misc{li2024craftsman,
-    title         = {CraftsMan: High-fidelity Mesh Generation with 3D Native Generation and Interactive Geometry Refiner}, 
+    title         = {CraftsMan3D: High-fidelity Mesh Generation with 3D Native Generation and Interactive Geometry Refiner}, 
     author        = {Weiyu Li and Jiarui Liu and Hongyu Yan and Rui Chen and Yixun Liang and Xuelin Chen and Ping Tan and Xiaoxiao Long},
     year          = {2024},
     archivePrefix = {arXiv preprint arXiv:2405.14979},

@@ -23,101 +23,12 @@ from craftsman.systems.base import BaseSystem
 from craftsman.utils.misc import get_rank
 from craftsman.utils.typing import *
 from diffusers import DDIMScheduler
-
-def compute_snr(noise_scheduler, timesteps):
-    """
-    Computes SNR as per
-    https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L847-L849
-    """
-    alphas_cumprod = noise_scheduler.alphas_cumprod
-    sqrt_alphas_cumprod = alphas_cumprod**0.5
-    sqrt_one_minus_alphas_cumprod = (1.0 - alphas_cumprod) ** 0.5
-
-    # Expand the tensors.
-    # Adapted from https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L1026
-    sqrt_alphas_cumprod = sqrt_alphas_cumprod.to(device=timesteps.device)[timesteps].float()
-    while len(sqrt_alphas_cumprod.shape) < len(timesteps.shape):
-        sqrt_alphas_cumprod = sqrt_alphas_cumprod[..., None]
-    alpha = sqrt_alphas_cumprod.expand(timesteps.shape)
-
-    sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod.to(device=timesteps.device)[timesteps].float()
-    while len(sqrt_one_minus_alphas_cumprod.shape) < len(timesteps.shape):
-        sqrt_one_minus_alphas_cumprod = sqrt_one_minus_alphas_cumprod[..., None]
-    sigma = sqrt_one_minus_alphas_cumprod.expand(timesteps.shape)
-
-    # Compute SNR.
-    snr = (alpha / sigma) ** 2
-    return snr
-
-
-def ddim_sample(ddim_scheduler: DDIMScheduler,
-                diffusion_model: torch.nn.Module,
-                shape: Union[List[int], Tuple[int]],
-                cond: torch.FloatTensor,
-                steps: int,
-                eta: float = 0.0,
-                guidance_scale: float = 3.0,
-                do_classifier_free_guidance: bool = True,
-                generator: Optional[torch.Generator] = None,
-                device: torch.device = "cuda:0",
-                disable_prog: bool = True):
-
-    assert steps > 0, f"{steps} must > 0."
-
-    # init latents
-    bsz = cond.shape[0]
-    if do_classifier_free_guidance:
-        bsz = bsz // 2
-
-    latents = torch.randn(
-        (bsz, *shape),
-        generator=generator,
-        device=cond.device,
-        dtype=cond.dtype,
-    )
-    # scale the initial noise by the standard deviation required by the scheduler
-    latents = latents * ddim_scheduler.init_noise_sigma
-    # set timesteps
-    ddim_scheduler.set_timesteps(steps)
-    timesteps = ddim_scheduler.timesteps.to(device)
-    # prepare extra kwargs for the scheduler step, since not all schedulers have the same signature
-    # eta (η) is only used with the DDIMScheduler, and between [0, 1]
-    extra_step_kwargs = {
-        # "eta": eta,
-        "generator": generator
-    }
-
-    # reverse
-    for i, t in enumerate(tqdm(timesteps, disable=disable_prog, desc="DDIM Sampling:", leave=False)):
-        # expand the latents if we are doing classifier free guidance
-        latent_model_input = (
-            torch.cat([latents] * 2)
-            if do_classifier_free_guidance
-            else latents
-        )
-        # predict the noise residual
-        timestep_tensor = torch.tensor([t], dtype=torch.long, device=device)
-        timestep_tensor = timestep_tensor.expand(latent_model_input.shape[0])
-        noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor, cond)
-
-        # perform guidance
-        if do_classifier_free_guidance:
-            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-            noise_pred = noise_pred_uncond + guidance_scale * (
-                    noise_pred_text - noise_pred_uncond
-            )
-
-        # compute the previous noisy sample x_t -> x_t-1
-        latents = ddim_scheduler.step(
-            noise_pred, t, latents, **extra_step_kwargs
-        ).prev_sample
-
-        yield latents, t
+from craftsman.systems.utils import compute_snr, ddim_sample
 
 
 # DEBUG = True
-@craftsman.register("pixart-diffusion-system")
-class PixArtDiffusionSystem(BaseSystem):
+@craftsman.register("shape-diffusion-system")
+class ShapeDiffusionSystem(BaseSystem):
     @dataclass
     class Config(BaseSystem.Config):
         val_samples_json: str = None
