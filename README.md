@@ -121,13 +121,15 @@ pip install torch-cluster -f https://data.pyg.org/whl/torch-2.3.1+cu121.html
 
 
 ## ✨ History
-
 This repo will port some recent techniques for 3D diffusion model and the history version like the arxiv version can be found in different branch.
+<details> 
 
 <p align="center">
   <img src="asset/history.png" >
 </p>
 
+
+</details>
 
 # 🎥 Video
 
