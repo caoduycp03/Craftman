@@ -194,8 +194,11 @@ For more configs, please refer to the `inference.py`.
 ## Train from scratch
 We provide our training code to facilitate future research. And we provide a data sample in `data`.
 100k data sample for VAE training can be downloaded from (to be uploaded)
+
 100k data sample for diffusion training can be downloaded from https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/Objaverse_100k.zip
+
 selected 190k UUID for training can be downloaded from https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/objaverse_190k.json
+
 selected 320k UUID for training can be downloaded from https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/objaverse_320k.json
 
 For more training details and configs, please refer to the `configs` folder.
