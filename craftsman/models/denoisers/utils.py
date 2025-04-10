@@ -15,15 +15,19 @@ class DiTBlock(nn.Module):
     A DiT block with adaptive layer norm (adaLN-single) conditioning.
     """
 
-    def __init__(self, width, heads, init_scale=1.0, qkv_bias=True, use_flash=True, drop_path=0.0):
+    def __init__(self, width, heads, init_scale=1.0, qkv_bias=True, qkv_fuse=False, use_RMSNorm=False, use_flash=True, drop_path=0.0):
         super().__init__()
-        self.norm1 = nn.LayerNorm(width, elementwise_affine=True, eps=1e-6)
+        if use_RMSNorm:
+            self.norm1 = nn.RMSNorm(width, elementwise_affine=True, eps=1e-6)
+        else:
+            self.norm1 = nn.LayerNorm(width, elementwise_affine=True, eps=1e-6)
         self.attn = MultiheadAttention(
             n_ctx=None,
             width=width,
             heads=heads,
             init_scale=init_scale,
             qkv_bias=qkv_bias,
+            qkv_fuse=qkv_fuse,
             use_flash=use_flash
         )
         self.cross_attn = MultiheadCrossAttention(
@@ -33,9 +37,13 @@ class DiTBlock(nn.Module):
             data_width=None,
             init_scale=init_scale,
             qkv_bias=qkv_bias,
+            qkv_fuse=qkv_fuse,
             use_flash=use_flash,
         )
-        self.norm2 = nn.LayerNorm(width, elementwise_affine=True, eps=1e-6)
+        if use_RMSNorm:
+            self.norm2 = nn.RMSNorm(width, elementwise_affine=True, eps=1e-6)
+        else:
+            self.norm2 = nn.LayerNorm(width, elementwise_affine=True, eps=1e-6)
 
         self.mlp = MLP(width=width, init_scale=init_scale)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
@@ -131,9 +139,12 @@ class T2IFinalLayer(nn.Module):
     The final layer of PixArt.
     """
 
-    def __init__(self, hidden_size, out_channels):
+    def __init__(self, hidden_size, out_channels, use_RMSNorm=False):
         super().__init__()
-        self.norm_final = nn.LayerNorm(hidden_size, elementwise_affine=True, eps=1e-6)
+        if use_RMSNorm:
+            self.norm_final = nn.RMSNorm(hidden_size, elementwise_affine=True, eps=1e-6)
+        else:
+            self.norm_final = nn.LayerNorm(hidden_size, elementwise_affine=True, eps=1e-6)
         self.linear = nn.Linear(hidden_size, out_channels, bias=True)
         self.scale_shift_table = nn.Parameter(torch.randn(2, hidden_size) / hidden_size ** 0.5)
         self.out_channels = out_channels

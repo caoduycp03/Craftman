@@ -1,4 +1,4 @@
-#### Important: we released [CraftsMan3D-DoraVAE](https://aruichen.github.io/Dora/) trained using rectified flow. (is still converting and uploading the weights...)
+#### Important: we released [CraftsMan3D-DoraVAE](https://aruichen.github.io/Dora/) trained using rectified flow. 
 
 [中文版](README_zh.md)
 <p align="center">
@@ -22,9 +22,13 @@ from craftsman import CraftsManPipeline
 import torch
 
 # load from local ckpt
+# mkdir ckpts && cd ckpts
+# mkdir craftsman-DoraVAE && cd craftsman-DoraVAE
+# wget https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/craftsman-DoraVAE/config.yaml
+# wget https://pub-c7137d332b4145b6b321a6c01fcf8911.r2.dev/craftsman-DoraVAE/model.ckpt
 # pipeline = CraftsManPipeline.from_pretrained("./ckpts/craftsman-DoraVAE", device="cuda:0", torch_dtype=torch.bfloat16) 
 
-# load from huggingface model hub
+# load from huggingface model hub, I uploading...
 pipeline = CraftsManPipeline.from_pretrained("craftsman3d/craftsman-DoraVAE", device="cuda:0", torch_dtype=torch.bfloat16)
 
 # inference
@@ -62,10 +66,11 @@ We present a novel generative 3D modeling system, coined CraftsMan, which can ge
 - [x] Model zoo
 - [x] Environment setup
 - [x] Data sample
-- [x] CraftsMan3D-DoraVAE
+- [x] CraftsMan3D-DoraVAE (not the official version)
 - [x] support rectified flow training
+- [x] support [flashVDM](https://github.com/Tencent/FlashVDM/tree/main), thanks for their open-source
 - [ ] release multiview(4 views) conditioned model (including weights and training data sample) 
-- [ ] add data sample for vae training
+- [ ] add data for vae training
 - [ ] support training and finetuning TripoSG model (almost done)
 - [ ] support training Hunyuan3D-2 model(it is not release the weights for vae encoder)
 
@@ -94,8 +99,8 @@ The mesh refinement part is performed on a GTX 3080 GPU.
 :smiley: We also provide a Dockerfile for easy installation, see [Setup using Docker](./docker/README.md).
 
  - Python 3.10.0
- - PyTorch 2.3.0
- - Cuda Toolkit 12.1.0
+ - PyTorch 2.5.1 (for RSMNorm)
+ - Cuda Toolkit 12.4.0
  - Ubuntu 22.04
 
 Clone this repository.
@@ -109,11 +114,11 @@ Install the required packages.
 ```sh
 conda create -n CraftsMan python=3.10 -y
 conda activate CraftsMan
-conda install -c "nvidia/label/cuda-12.1.1" cudatoolkit
-# conda install -y pytorch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 -c pytorch -c nvidia
-pip install -y pytorch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1
+# conda install -c "nvidia/label/cuda-12.1.1" cudatoolkit
+# conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=12.1 -c pytorch -c nvidia
+pip install torch==2.5.1 torchvision==0.20.1
 pip install -r docker/requirements.txt
-pip install torch-cluster -f https://data.pyg.org/whl/torch-2.3.1+cu121.html
+pip install torch-cluster -f https://data.pyg.org/whl/torch-2.5.1+cu124.html
 
 ```
 

@@ -67,6 +67,13 @@ class CraftsManPipeline():
             ckpt["state_dict"] if "state_dict" in ckpt else ckpt,
         )
         system = system.to(device).eval()
+        if 'torch_dtype' in kwargs:
+            if kwargs['torch_dtype'] == torch.bfloat16:
+                system.shape_model = system.shape_model.to(torch.float16) # shape vae only support fp16
+                system.condition = system.condition.to(torch.bfloat16)
+                system.denoiser_model = system.denoiser_model.to(torch.bfloat16)
+            else:
+                system = system.to(kwargs['torch_dtype'])
 
         return cls(
             device=device,
@@ -173,6 +180,7 @@ class CraftsManPipeline():
         background_color: List[int] = [255, 255, 255],
         foreground_ratio: float = 0.95,
         mc_depth: int = 8,
+        use_flashVDM: bool = True,
         only_max_component: bool = False,
     ):
         r"""
@@ -271,7 +279,8 @@ class CraftsManPipeline():
                 mesh_v_f, has_surface = self.system.shape_model.extract_geometry(
                     cur_latents, 
                     octree_depth=mc_depth,
-                    extract_mesh_func="mc"
+                    extract_mesh_func="mc",
+                    use_flashVDM=use_flashVDM,
                 )
                 
                 if output_type == "trimesh":

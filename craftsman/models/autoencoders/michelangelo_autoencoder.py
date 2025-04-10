@@ -198,16 +198,18 @@ class AutoEncoder(BaseModule):
     
     def query(self, queries: torch.FloatTensor, latents: torch.FloatTensor) -> torch.FloatTensor:
         raise NotImplementedError
-    
+        
     @torch.no_grad()
     def extract_geometry(self,
                          latents: torch.FloatTensor,
                          extract_mesh_func: str = "mc",
                          bounds: Union[Tuple[float], List[float], float] = (-1.05, -1.05, -1.05, 1.05, 1.05, 1.05),
                          octree_depth: int = 8,
-                         num_chunks: int = 10000,
+                         num_chunks: int = 100000,
+                         use_flashVDM: bool = True,
                          ):
         
+        batch_size = latents.shape[0]
         if isinstance(bounds, float):
             bounds = [-bounds, -bounds, -bounds, bounds, bounds, bounds]
 
@@ -215,33 +217,45 @@ class AutoEncoder(BaseModule):
         bbox_max = np.array(bounds[3:6])
         bbox_size = bbox_max - bbox_min
 
-        xyz_samples, grid_size, length = generate_dense_grid_points(
-            bbox_min=bbox_min,
-            bbox_max=bbox_max,
-            octree_depth=octree_depth,
-            indexing="ij"
-        )
-        xyz_samples = torch.FloatTensor(xyz_samples)
-        batch_size = latents.shape[0]
+        if use_flashVDM:
+            from .volume_decoders import HierarchicalVolumeDecoding
+            volume_decoder = HierarchicalVolumeDecoding()
+            grid_logits = volume_decoder(latents, self.query, \
+                **{'bounds': bounds, 'octree_resolution': 2**octree_depth, 'num_chunks': num_chunks})
+            grid_logits = grid_logits.cpu().float().numpy()
+            grid_size = grid_logits.shape[1:4]
 
-        batch_logits = []
-        for start in range(0, xyz_samples.shape[0], num_chunks):
-            queries = xyz_samples[start: start + num_chunks, :].to(latents)
-            batch_queries = repeat(queries, "p c -> b p c", b=batch_size)
+        else:
+            start_time_generate_dense_grid_points = time.time()
+            xyz_samples, grid_size, length = generate_dense_grid_points(
+                bbox_min=bbox_min,
+                bbox_max=bbox_max,
+                octree_depth=octree_depth,
+                indexing="ij"
+            )
+            xyz_samples = torch.FloatTensor(xyz_samples)
+            print(f"generate_dense_grid_points time: {time.time()-start_time_generate_dense_grid_points}")
 
-            logits = self.query(batch_queries, latents)
-            batch_logits.append(logits.cpu())
+            start_time_query_sdf = time.time()
+            batch_logits = []
+            for start in range(0, xyz_samples.shape[0], num_chunks):
+                queries = xyz_samples[start: start + num_chunks, :].to(latents)
+                batch_queries = repeat(queries, "p c -> b p c", b=batch_size)
 
-        grid_logits = torch.cat(batch_logits, dim=1).view((batch_size, grid_size[0], grid_size[1], grid_size[2])).float().numpy()
+                logits = self.query(batch_queries, latents)
+                batch_logits.append(logits.cpu())
+            print(f"query_sdf time: {time.time()-start_time_query_sdf}")
 
+            grid_logits = torch.cat(batch_logits, dim=1).view((batch_size, grid_size[0], grid_size[1], grid_size[2])).float().numpy()
+
+        start_time_extract_mesh = time.time()
         mesh_v_f = []
         has_surface = np.zeros((batch_size,), dtype=np.bool_)
         for i in range(batch_size):
             try:
                 if extract_mesh_func == "mc":
                     from skimage import measure
-                    vertices, faces, normals, _ = measure.marching_cubes(grid_logits[i], 0, method="lewiner")
-                    # vertices, faces = mcubes.marching_cubes(grid_logits[i], 0)
+                    vertices, faces, normals, _ = measure.marching_cubes(grid_logits[i], 0)
                     vertices = vertices / grid_size * bbox_size + bbox_min
                     faces = faces[:, [2, 1, 0]]
                 elif extract_mesh_func == "diffmc":
@@ -251,6 +265,7 @@ class AutoEncoder(BaseModule):
                     vertices = vertices * 2 - 1
                     vertices = vertices.cpu().numpy()
                     faces = faces.cpu().numpy()
+                    faces = faces[:, [2, 1, 0]]
                 elif extract_mesh_func == "diffdmc":
                     from diso import DiffDMC
                     diffmc = DiffDMC(dtype=torch.float32).to(latents.device)
@@ -258,6 +273,7 @@ class AutoEncoder(BaseModule):
                     vertices = vertices * 2 - 1
                     vertices = vertices.cpu().numpy()
                     faces = faces.cpu().numpy()
+                    faces = faces[:, [2, 1, 0]]
                 else:
                     raise NotImplementedError(f"{extract_mesh_func} not implement")
                 mesh_v_f.append((vertices.astype(np.float32), np.ascontiguousarray(faces.astype(np.int64))))
@@ -266,6 +282,7 @@ class AutoEncoder(BaseModule):
                 mesh_v_f.append((None, None))
                 has_surface[i] = False
 
+        print(f"extract_mesh time: {time.time()-start_time_extract_mesh}")
         return mesh_v_f, has_surface
 
 
@@ -677,6 +694,6 @@ class MichelangeloAutoencoder(AutoEncoder):
             logits (torch.FloatTensor): [B, N], occupancy logits
         """
 
-        logits = self.decoder(queries, latents).squeeze(-1)
+        logits = self.decoder(queries, latents)
 
         return logits

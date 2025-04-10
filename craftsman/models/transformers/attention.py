@@ -19,6 +19,7 @@ class MultiheadAttention(nn.Module):
         init_scale: float,
         qkv_bias: bool,
         qk_norm: bool = False,
+        qkv_fuse: bool = True,
         norm_layer=nn.LayerNorm,
         use_flash: bool = False
     ):
@@ -26,7 +27,13 @@ class MultiheadAttention(nn.Module):
         self.n_ctx = n_ctx
         self.width = width
         self.heads = heads
-        self.c_qkv = nn.Linear(width, width * 3, bias=qkv_bias)
+        self.qkv_fuse = qkv_fuse
+        if qkv_fuse:
+            self.c_qkv = nn.Linear(width, width * 3, bias=qkv_bias)
+        else:
+            self.c_q = nn.Linear(width, width, bias=qkv_bias)
+            self.c_k = nn.Linear(width, width, bias=qkv_bias)
+            self.c_v = nn.Linear(width, width, bias=qkv_bias)
         self.c_proj = nn.Linear(width, width)
         self.attention = QKVMultiheadAttention(
             heads=heads, 
@@ -36,12 +43,23 @@ class MultiheadAttention(nn.Module):
             qk_norm=qk_norm, 
             use_flash=use_flash
         )
-        init_linear(self.c_qkv, init_scale)
+        if qkv_fuse:
+            init_linear(self.c_qkv, init_scale)
+        else:
+            init_linear(self.c_q, init_scale)
+            init_linear(self.c_k, init_scale)
+            init_linear(self.c_v, init_scale)
         init_linear(self.c_proj, init_scale)
 
     def forward(self, x):
-        x = self.c_qkv(x)
-        x = checkpoint(self.attention, (x,), (), True)
+        if self.qkv_fuse:
+            x = self.c_qkv(x)
+            x = checkpoint(self.attention.forward_qkv_fuse, (x,), (), True)
+        else:
+            q = self.c_q(x)
+            k = self.c_k(x)
+            v = self.c_v(x)
+            x = checkpoint(self.attention, (q,k,v,), (), True)
         x = self.c_proj(x)
         return x
 
@@ -56,7 +74,30 @@ class QKVMultiheadAttention(nn.Module):
         self.q_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
         self.k_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
 
-    def forward(self, qkv):
+    def forward(self, q, k, v):
+        bs, n_ctx, width = q.shape
+        attn_ch = width // self.heads
+        scale = 1 / math.sqrt(math.sqrt(attn_ch))
+        q = q.view(bs, n_ctx, self.heads, -1)
+        k = k.view(bs, n_ctx, self.heads, -1)
+        v = v.view(bs, n_ctx, self.heads, -1)
+
+        if self.use_flash:
+            q = q.permute(0, 2, 1, 3)
+            k = k.permute(0, 2, 1, 3)
+            v = v.permute(0, 2, 1, 3)
+            out = F.scaled_dot_product_attention(q, k, v).permute(0, 2, 1, 3).reshape(bs, n_ctx, -1)
+        else:
+            weight = torch.einsum(
+                "bthc,bshc->bhts", q * scale, k * scale
+            )  # More stable with f16 than dividing afterwards
+            wdtype = weight.dtype
+            weight = torch.softmax(weight.float(), dim=-1).type(wdtype)
+            out = torch.einsum("bhts,bshc->bthc", weight, v).reshape(bs, n_ctx, -1)
+
+        return out
+
+    def forward_qkv_fuse(self, qkv):
         bs, n_ctx, width = qkv.shape
         attn_ch = width // self.heads // 3
         scale = 1 / math.sqrt(math.sqrt(attn_ch))
@@ -133,6 +174,7 @@ class MultiheadCrossAttention(nn.Module):
         qkv_bias: bool = True,
         norm_layer=nn.LayerNorm,
         qk_norm: bool = False,
+        qkv_fuse: bool = True, 
         use_flash: bool = False,
         n_data: Optional[int] = None,
         data_width: Optional[int] = None,
@@ -142,26 +184,53 @@ class MultiheadCrossAttention(nn.Module):
         self.width = width
         self.heads = heads
         self.data_width = width if data_width is None else data_width
-        self.c_q = nn.Linear(width, width, bias=qkv_bias)
-        self.c_kv = nn.Linear(self.data_width, width * 2, bias=qkv_bias)
+        self.qkv_fuse = qkv_fuse
+        if qkv_fuse:
+            self.c_q = nn.Linear(width, width, bias=qkv_bias)
+            self.c_kv = nn.Linear(self.data_width, width * 2, bias=qkv_bias)
+        else:
+            self.c_q = nn.Linear(width, width, bias=qkv_bias)
+            self.c_k = nn.Linear(width, width, bias=qkv_bias)
+            self.c_v = nn.Linear(width, width, bias=qkv_bias)
         self.c_proj = nn.Linear(width, width)
         self.attention = QKVMultiheadCrossAttention(
             heads=heads, n_data=n_data, width=width, norm_layer=norm_layer, qk_norm=qk_norm, use_flash=use_flash
         )
-        init_linear(self.c_q, init_scale)
-        init_linear(self.c_kv, init_scale)
+        if qkv_fuse:
+            init_linear(self.c_q, init_scale)
+            init_linear(self.c_kv, init_scale)
+        else:
+            init_linear(self.c_q, init_scale)
+            init_linear(self.c_k, init_scale)
+            init_linear(self.c_v, init_scale)
+
         init_linear(self.c_proj, init_scale)
 
     def forward(self, x, data):
-        x = self.c_q(x)
-        data = self.c_kv(data)
-        x = checkpoint(self.attention, (x, data), (), True)
+        if self.qkv_fuse:
+            x = self.c_q(x)
+            data = self.c_kv(data)
+            x = checkpoint(self.attention.forward_qkv_fuse, (x, data), (), True)
+        else:
+            q = self.c_q(x)
+            k = self.c_k(data)
+            v = self.c_v(data)
+            x = checkpoint(self.attention, (q, k, v,), (), True)
         x = self.c_proj(x)
         return x
 
 
 class QKVMultiheadCrossAttention(nn.Module):
-    def __init__(self, *, heads: int, n_data: Optional[int] = None, width=None, norm_layer=nn.LayerNorm, qk_norm: bool = False, use_flash: bool = False):
+    def __init__(
+        self, 
+        *, 
+        heads: int, 
+        n_data: Optional[int] = None, 
+        width=None, 
+        norm_layer=nn.LayerNorm, 
+        qk_norm: bool = False, 
+        use_flash: bool = False
+    ):
 
         super().__init__()
         self.heads = heads
@@ -171,7 +240,32 @@ class QKVMultiheadCrossAttention(nn.Module):
         self.q_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
         self.k_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
 
-    def forward(self, q, kv):
+    def forward(self, q, k, v):
+        _, n_ctx, _ = q.shape
+        bs, n_data, width = k.shape
+        attn_ch = width // self.heads
+        scale = 1 / math.sqrt(math.sqrt(attn_ch))
+        q = q.view(bs, n_ctx, self.heads, -1)
+        k = k.view(bs, n_data, self.heads, -1)
+        v = v.view(bs, n_data, self.heads, -1)
+
+        if self.use_flash:
+            
+            q = q.permute(0, 2, 1, 3)
+            k = k.permute(0, 2, 1, 3)
+            v = v.permute(0, 2, 1, 3)
+            out = F.scaled_dot_product_attention(q, k, v).permute(0, 2, 1, 3).reshape(bs, n_ctx, -1)
+        else:
+            weight = torch.einsum(
+                "bthc,bshc->bhts", q * scale, k * scale
+            )  # More stable with f16 than dividing afterwards
+            wdtype = weight.dtype
+            weight = torch.softmax(weight.float(), dim=-1).type(wdtype)
+            out = torch.einsum("bhts,bshc->bthc", weight, v).reshape(bs, n_ctx, -1)
+
+        return out
+
+    def forward_qkv_fuse(self, q, kv):
         _, n_ctx, _ = q.shape
         bs, n_data, width = kv.shape
         attn_ch = width // self.heads // 2

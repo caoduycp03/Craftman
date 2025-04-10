@@ -28,9 +28,11 @@ class PixArtDinoDenoiser(BaseModule):
         init_scale: float = 0.25
         use_checkpoint: bool = False
         drop_path: float = 0.
+        qkv_fuse: bool = True
         clip_weight: float = 1.0
         dino_weight: float = 1.0
         condition_type: str = "clip_dinov2"
+        use_RMSNorm: bool = False
 
     cfg: Config
 
@@ -47,13 +49,13 @@ class PixArtDinoDenoiser(BaseModule):
         if self.cfg.context_ln:
             if "clip" in self.cfg.condition_type:
                 self.clip_embed = nn.Sequential(
-                    nn.LayerNorm(self.cfg.context_dim),
+                    nn.RMSNorm(self.cfg.context_dim) if self.cfg.use_RMSNorm else nn.LayerNorm(self.cfg.context_dim),
                     nn.Linear(self.cfg.context_dim, self.cfg.width),
                 )
 
             if "dino" in self.cfg.condition_type:
                 self.dino_embed = nn.Sequential(
-                    nn.LayerNorm(self.cfg.context_dim),
+                    nn.RMSNorm(self.cfg.context_dim) if self.cfg.use_RMSNorm else nn.LayerNorm(self.cfg.context_dim),
                     nn.Linear(self.cfg.context_dim, self.cfg.width),
                 )
         else:
@@ -70,6 +72,8 @@ class PixArtDinoDenoiser(BaseModule):
                     heads=self.cfg.heads, 
                     init_scale=init_scale, 
                     qkv_bias=self.cfg.drop_path, 
+                    qkv_fuse=self.cfg.qkv_fuse,
+                    use_RMSNorm=self.cfg.use_RMSNorm,
                     use_flash=True,
                     drop_path=drop_path[i]
             )
@@ -82,7 +86,7 @@ class PixArtDinoDenoiser(BaseModule):
                     )
         
          # final layer
-        self.final_layer = T2IFinalLayer(self.cfg.width, self.cfg.output_channels)
+        self.final_layer = T2IFinalLayer(self.cfg.width, self.cfg.output_channels, self.cfg.use_RMSNorm)
 
         self.identity_initialize()
 
