@@ -36,12 +36,13 @@ system:
   eta: 0.0
   extract_mesh_func: mc
 
-  shape_model_type: michelangelo-autoencoder
+  shape_model_type: dora-autoencoder
   shape_model:
-    pretrained_model_name_or_path: ckpts/model.ckpt
+    pretrained_dino_name_or_path: craftsman-DoraVAE/model.ckpt
+    n_samples: 16384
+    with_sharp_data: true
     use_downsample: true
-    num_latents: 768
-    use_multi_reso: false
+    num_latents: 2048
     embed_dim: 64
     point_feats: 3
     out_dim: 1
