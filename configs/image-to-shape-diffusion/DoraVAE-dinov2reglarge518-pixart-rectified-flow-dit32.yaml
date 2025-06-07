@@ -87,25 +87,16 @@ system:
     init_scale: 1.0
     use_checkpoint: true
 
-  noise_scheduler_type: "diffusers.schedulers.DDPMScheduler"
+  noise_scheduler_type: diffusers.schedulers.FlowMatchEulerDiscreteScheduler
   noise_scheduler:
     num_train_timesteps: 1000
-    beta_start: 0.00085
-    beta_end: 0.012
-    beta_schedule: "scaled_linear"
-    variance_type: "fixed_small"
-    clip_sample: false
-
-  denoise_scheduler_type: "diffusers.schedulers.DDIMScheduler"
+    shift: 3.0
+    
+  denoise_scheduler_type: diffusers.schedulers.FlowMatchEulerDiscreteScheduler
   denoise_scheduler:
     num_train_timesteps: 1000
-    beta_start: 0.00085
-    beta_end: 0.012
-    beta_schedule: "scaled_linear"
-    clip_sample: false   # clip sample to -1~1
-    set_alpha_to_one: false
-    steps_offset: 1
-
+    shift: 3.0
+    
   loggers:
     wandb:
       enable: false
