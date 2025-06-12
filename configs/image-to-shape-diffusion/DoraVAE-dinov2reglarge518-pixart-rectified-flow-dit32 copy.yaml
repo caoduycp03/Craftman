@@ -38,7 +38,6 @@ system:
 
   shape_model_type: dora-autoencoder
   shape_model:
-    pretrained_dino_name_or_path: craftsman-DoraVAE/model.ckpt
     n_samples: 16384
     with_sharp_data: true
     use_downsample: true
