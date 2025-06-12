@@ -170,7 +170,8 @@ def main(args, extras) -> None:
     rank = get_rank()
     pl.seed_everything(cfg.seed + rank, workers=True)
 
-    dm = craftsman.find(cfg.data_type)(cfg.data)
+    # dm = craftsman.find(cfg.data_type)(cfg.data)
+    breakpoint()
     system: BaseSystem = craftsman.find(cfg.system_type)(
         cfg.system, resumed=cfg.resume is not None
     )

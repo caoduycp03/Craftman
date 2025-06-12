@@ -65,7 +65,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
     def configure(self):
         super().configure()
-
+        breakpoint
         self.shape_model = craftsman.find(self.cfg.shape_model_type)(self.cfg.shape_model)
         self.shape_model.eval()
         self.shape_model.requires_grad_(False)
@@ -77,7 +77,7 @@ class ShapeDiffusionSystem(BaseSystem):
         self.noise_scheduler = craftsman.find(self.cfg.noise_scheduler_type)(**self.cfg.noise_scheduler)
 
         self.denoise_scheduler = craftsman.find(self.cfg.denoise_scheduler_type)(**self.cfg.denoise_scheduler)
-
+        breakpoint()
     def forward(self, batch: Dict[str, Any], skip_noise=False) -> Dict[str, Any]:
         # 1. encode shape latents
         shape_embeds, kl_embed, _ = self.shape_model.encode(
