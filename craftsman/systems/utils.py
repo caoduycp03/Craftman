@@ -145,26 +145,22 @@ def retrieve_timesteps(
 def ddim_sample(scheduler: DDIMScheduler,
                 diffusion_model: torch.nn.Module,
                 shape: Union[List[int], Tuple[int]],
-                cond: torch.FloatTensor,
+                bsz: int,
                 steps: int,
                 eta: float = 0.0,
-                guidance_scale: float = 3.0,
-                do_classifier_free_guidance: bool = True,
                 generator: Optional[torch.Generator] = None,
                 device: torch.device = "cuda:0",
+                dtype,
                 disable_prog: bool = True):
 
     assert steps > 0, f"{steps} must > 0."
 
-    # init latents
-    bsz = cond.shape[0]
-    if do_classifier_free_guidance:
-        bsz = bsz // 2
+
     latents = torch.randn(
         (bsz, *shape),
         generator=generator,
-        device=cond.device,
-        dtype=cond.dtype,
+        device=device,
+        dtype=dtype,
     )
     try:
         # scale the initial noise by the standard deviation required by the scheduler
@@ -202,14 +198,7 @@ def ddim_sample(scheduler: DDIMScheduler,
         # predict the noise residual
         timestep_tensor = torch.tensor([t], dtype=torch.long, device=device)
         timestep_tensor = timestep_tensor.expand(latent_model_input.shape[0])
-        noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor, cond)
-
-        # perform guidance
-        if do_classifier_free_guidance:
-            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-            noise_pred = noise_pred_uncond + guidance_scale * (
-                    noise_pred_text - noise_pred_uncond
-            )
+        noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor)
 
         # compute the previous noisy sample x_t -> x_t-1
         latents = scheduler.step(
