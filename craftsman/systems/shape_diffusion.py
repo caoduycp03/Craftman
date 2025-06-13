@@ -76,7 +76,7 @@ class ShapeDiffusionSystem(BaseSystem):
         self.noise_scheduler = craftsman.find(self.cfg.noise_scheduler_type)(**self.cfg.noise_scheduler)
 
         self.denoise_scheduler = craftsman.find(self.cfg.denoise_scheduler_type)(**self.cfg.denoise_scheduler)
-        breakpoint()
+
     def forward(self, batch: Dict[str, Any], skip_noise=False) -> Dict[str, Any]:
         # 1. encode shape latents
         latents = batch['kl_embed'] * self.cfg.z_scale_factor
