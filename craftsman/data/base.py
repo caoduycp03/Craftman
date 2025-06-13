@@ -54,7 +54,6 @@ class BaseDataset(Dataset):
         self.cfg: BaseDataModuleConfig = cfg
         self.split = split
         self.uids = [f.split('.')[0] for f in os.listdir(self.cfg.geo_data_path)]
-        breakpoint()
         print(f"Loaded {len(self.uids)} {split} uids")
     
     def __len__(self):
