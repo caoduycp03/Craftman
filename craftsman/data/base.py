@@ -53,8 +53,8 @@ class BaseDataset(Dataset):
         super().__init__()
         self.cfg: BaseDataModuleConfig = cfg
         self.split = split
+        self.uids = [f.split('.')[0] for f in os.listdir(self.cfg.geo_data_path)]
         breakpoint()
-        self.uids = os.listdir(self.cfg.geo_data_path)
         print(f"Loaded {len(self.uids)} {split} uids")
     
     def __len__(self):
@@ -66,7 +66,7 @@ class BaseDataset(Dataset):
         kl_embed = torch.load(f'{self.cfg.geo_data_path}/{self.uids[index]}.pt')
         
         ret = {
-            "uid": self.uids[index].split('/')[-1],
+            "uid": self.uids[index],
             "kl_embed": kl_embed,
         }
 
