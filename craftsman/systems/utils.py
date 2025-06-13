@@ -189,11 +189,8 @@ def ddim_sample(scheduler: DDIMScheduler,
     # reverse
     for i, t in enumerate(tqdm(timesteps, disable=disable_prog, desc="DDIM Sampling:", leave=False)):
         # expand the latents if we are doing classifier free guidance
-        latent_model_input = (
-            torch.cat([latents] * 2)
-            if do_classifier_free_guidance
-            else latents
-        )
+        latent_model_input = latents
+
 
         # predict the noise residual
         timestep_tensor = torch.tensor([t], dtype=torch.long, device=device)
