@@ -198,7 +198,7 @@ class ShapeDiffusionSystem(BaseSystem):
                eta: float = 0.0,
                seed: Optional[int] = None,
                **kwargs):
-
+        breakpoint()
         if steps is None:
             steps = self.cfg.num_inference_steps
         # if guidance_scale is None:
@@ -241,6 +241,7 @@ class ShapeDiffusionSystem(BaseSystem):
                 self.denoise_scheduler,
                 self.denoiser_model.eval(),
                 shape=self.shape_model.latent_shape,
+                bsz=len(sample_inputs["uid"]),
                 steps=steps,
                 device=self.device,
                 eta=eta,
