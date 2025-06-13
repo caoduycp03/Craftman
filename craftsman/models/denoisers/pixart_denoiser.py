@@ -112,8 +112,7 @@ class PixArtDinoDenoiser(BaseModule):
 
     def forward(self,
                 model_input: torch.FloatTensor,
-                timestep: torch.LongTensor,
-                context: torch.FloatTensor):
+                timestep: torch.LongTensor):
 
         r"""
         Args:
