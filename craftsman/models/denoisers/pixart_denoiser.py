@@ -132,27 +132,27 @@ class PixArtDinoDenoiser(BaseModule):
         t_emb = self.time_embed(timestep)
 
         # 2. conditions projector
-        context = context.view(B, self.cfg.n_views, -1, self.cfg.context_dim)
-        if self.cfg.condition_type == "clip_dinov2":
-            clip_feat, dino_feat = context.chunk(2, dim=2)
-            clip_cond = self.clip_embed(clip_feat.contiguous().view(B, -1, self.cfg.context_dim))
-            dino_cond = self.dino_embed(dino_feat.contiguous().view(B, -1, self.cfg.context_dim))
-            visual_cond = self.cfg.clip_weight * clip_cond + self.cfg.dino_weight * dino_cond
-        elif self.cfg.condition_type == "clip":
-            clip_cond = self.clip_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
-            visual_cond = clip_cond
-        elif self.cfg.condition_type == "dinov2":
-            dino_cond = self.dino_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
-            visual_cond = dino_cond
-        else:
-            raise NotImplementedError(f"condition type {self.cfg.condition_type} not implemented")
+        # context = context.view(B, self.cfg.n_views, -1, self.cfg.context_dim)
+        # if self.cfg.condition_type == "clip_dinov2":
+        #     clip_feat, dino_feat = context.chunk(2, dim=2)
+        #     clip_cond = self.clip_embed(clip_feat.contiguous().view(B, -1, self.cfg.context_dim))
+        #     dino_cond = self.dino_embed(dino_feat.contiguous().view(B, -1, self.cfg.context_dim))
+        #     visual_cond = self.cfg.clip_weight * clip_cond + self.cfg.dino_weight * dino_cond
+        # elif self.cfg.condition_type == "clip":
+        #     clip_cond = self.clip_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
+        #     visual_cond = clip_cond
+        # elif self.cfg.condition_type == "dinov2":
+        #     dino_cond = self.dino_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
+        #     visual_cond = dino_cond
+        # else:
+        #     raise NotImplementedError(f"condition type {self.cfg.condition_type} not implemented")
 
         # 4. denoiser
         latent = self.x_embed(model_input)
         
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
         for block in self.blocks:
-            latent = auto_grad_checkpoint(block, latent, visual_cond, t0)
+            latent = auto_grad_checkpoint(block, latent, t0)
 
         latent = self.final_layer(latent, t_emb)
 

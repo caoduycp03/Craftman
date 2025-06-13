@@ -5,7 +5,7 @@ seed: 0
 
 data_type: "Objaverse-datamodule"
 data:
-  local_dir: ./data/Objaverse_100k
+  local_dir: ./data/shapenet_bench
   load_geometry: true
   geo_data_type: "sdf" 
   geo_data_path: data/Objaverse_100k/surfaces

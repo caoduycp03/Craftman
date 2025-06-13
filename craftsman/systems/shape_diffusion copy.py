@@ -65,13 +65,14 @@ class ShapeDiffusionSystem(BaseSystem):
 
     def configure(self):
         super().configure()
+        breakpoint
         self.shape_model = None
         self.shape_model.eval()
         self.shape_model.requires_grad_(False)
 
         self.condition = None
         
-        self.denoiser_model = craftsman.find(self.cfg.denoiser_model_type)(self.cfg.denoiser_model)
+        self.denoiser_model = None
 
         self.noise_scheduler = craftsman.find(self.cfg.noise_scheduler_type)(**self.cfg.noise_scheduler)
 
@@ -79,7 +80,28 @@ class ShapeDiffusionSystem(BaseSystem):
         breakpoint()
     def forward(self, batch: Dict[str, Any], skip_noise=False) -> Dict[str, Any]:
         # 1. encode shape latents
-        latents = batch['kl_embed'] * self.cfg.z_scale_factor
+        shape_embeds, kl_embed, _ = self.shape_model.encode(
+            batch["surface"][..., :3 + self.cfg.shape_model.point_feats], 
+            sample_posterior=True
+        )
+
+        latents = kl_embed * self.cfg.z_scale_factor
+
+        # 2. gain condition. assert not (text_cond and image_cond), "Only one of text or image condition must be provided."
+        if "image" in batch and batch['image'].dim() == 5:
+            if self.training:
+                bs, n_images = batch['image'].shape[:2]
+                batch['image'] = batch['image'].view(bs*n_images, *batch['image'].shape[-3:])
+            else:
+                batch['image'] = batch['image'][:, 0, ...]
+                n_images = 1
+                bs = batch['image'].shape[0]
+            cond_latents = self.condition(batch).to(latents)
+            latents = latents.unsqueeze(1).repeat(1, n_images, 1, 1)
+            latents = latents.view(bs*n_images, *latents.shape[-2:])
+        else:
+            cond_latents = self.condition(batch).to(latents)
+            cond_latents = cond_latents.view(cond_latents.shape[0], -1, cond_latents.shape[-1])
 
         # 3. sample noise that we"ll add to the latents
         noise = torch.randn_like(latents).to(latents) # [batch_size, n_token, latent_dim]
@@ -98,7 +120,7 @@ class ShapeDiffusionSystem(BaseSystem):
         noisy_z = self.noise_scheduler.add_noise(latents, noise, timesteps)
 
         # 6. diffusion model forward
-        noise_pred = self.denoiser_model(noisy_z, timesteps)
+        noise_pred = self.denoiser_model(noisy_z, timesteps, cond_latents)
 
         # 7. compute loss
         if self.noise_scheduler.config.prediction_type == "epsilon":
