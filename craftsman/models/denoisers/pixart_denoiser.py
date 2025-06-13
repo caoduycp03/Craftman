@@ -146,12 +146,13 @@ class PixArtDinoDenoiser(BaseModule):
         # else:
         #     raise NotImplementedError(f"condition type {self.cfg.condition_type} not implemented")
 
+        visual_cond = None  
         # 4. denoiser
         latent = self.x_embed(model_input)
         
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
         for block in self.blocks:
-            latent = auto_grad_checkpoint(block, latent, t0)
+            latent = auto_grad_checkpoint(block, latent, visual_cond, t0)
 
         latent = self.final_layer(latent, t_emb)
 
