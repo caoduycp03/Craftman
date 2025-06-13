@@ -62,12 +62,8 @@ class BaseDataset(Dataset):
 
 
     def _load_shape_from_occupancy_or_sdf(self, index: int) -> Dict[str, Any]:
-        elif self.cfg.geo_data_type == "sdf":
-            # for sdf data with our own format
-            kl_embed = torch.load(f'{self.cfg.geo_data_path}/{self.uids[index]}.pt')
-            # for input point cloud
-        else:
-            raise NotImplementedError(f"Data type {self.cfg.geo_data_type} not implemented")
+        # for sdf data with our own format
+        kl_embed = torch.load(f'{self.cfg.geo_data_path}/{self.uids[index]}.pt')
         
         ret = {
             "uid": self.uids[index].split('/')[-1],
