@@ -122,7 +122,7 @@ trainer:
   max_epochs: 100000
   log_every_n_steps: 5
   num_sanity_val_steps: 1
-  check_val_every_n_epoch: 25
+  check_val_every_n_epoch: 1
   enable_progress_bar: true
   precision: 16-mixed
   strategy: 'ddp_find_unused_parameters_true'

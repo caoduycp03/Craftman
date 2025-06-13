@@ -167,7 +167,7 @@ class ShapeDiffusionSystem(BaseSystem):
         
         if get_rank() == 0:
     
-            sample_outputs = self.sample(sample_inputs=batch) # list
+            sample_outputs = self.sample()
             for i, sample_output in enumerate(sample_outputs):
                 mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
                 
@@ -190,7 +190,6 @@ class ShapeDiffusionSystem(BaseSystem):
  
     @torch.no_grad()
     def sample(self,
-               sample_inputs: Dict[str, Union[torch.FloatTensor, List[str]]],
                sample_times: int = 1,
                steps: Optional[int] = None,
                eta: float = 0.0,
@@ -238,7 +237,7 @@ class ShapeDiffusionSystem(BaseSystem):
                 self.denoise_scheduler,
                 self.denoiser_model.eval(),
                 shape=self.shape_model.latent_shape,
-                bsz=len(sample_inputs["uid"]),
+                bsz=1,
                 steps=steps,
                 device=self.device,
                 eta=eta,
