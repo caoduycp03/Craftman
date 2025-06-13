@@ -151,6 +151,7 @@ class PixArtDinoDenoiser(BaseModule):
         visual_cond = torch.zeros_like(latent).to(device=latent.device, dtype=latent.dtype)
 
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
+        breakpoint()
         for block in self.blocks:
             latent = auto_grad_checkpoint(block, latent, visual_cond, t0)
 
