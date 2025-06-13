@@ -150,7 +150,7 @@ def ddim_sample(scheduler: DDIMScheduler,
                 eta: float = 0.0,
                 generator: Optional[torch.Generator] = None,
                 device: torch.device = "cuda:0",
-                dtype,
+                dtype = torch.float32,
                 disable_prog: bool = True):
 
     assert steps > 0, f"{steps} must > 0."
