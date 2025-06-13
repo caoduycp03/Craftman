@@ -166,9 +166,8 @@ class ShapeDiffusionSystem(BaseSystem):
         self.eval()
         
         if get_rank() == 0:
-            sample_inputs = json.loads(open(self.cfg.val_samples_json).read()) # condition
-            sample_inputs_ = copy.deepcopy(sample_inputs)
-            sample_outputs = self.sample(sample_inputs) # list
+    
+            sample_outputs = self.sample(sample_inputs=batch) # list
             for i, sample_output in enumerate(sample_outputs):
                 mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
                 
@@ -194,11 +193,9 @@ class ShapeDiffusionSystem(BaseSystem):
                sample_inputs: Dict[str, Union[torch.FloatTensor, List[str]]],
                sample_times: int = 1,
                steps: Optional[int] = None,
-               guidance_scale: Optional[float] = None,
                eta: float = 0.0,
                seed: Optional[int] = None,
                **kwargs):
-        breakpoint()
         if steps is None:
             steps = self.cfg.num_inference_steps
         # if guidance_scale is None:
