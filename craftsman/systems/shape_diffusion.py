@@ -66,8 +66,8 @@ class ShapeDiffusionSystem(BaseSystem):
     def configure(self):
         super().configure()
         self.shape_model = None
-        self.shape_model.eval()
-        self.shape_model.requires_grad_(False)
+        # self.shape_model.eval()
+        # self.shape_model.requires_grad_(False)
 
         self.condition = None
         
