@@ -70,9 +70,9 @@ class ShapeDiffusionSystem(BaseSystem):
         self.shape_model.eval()
         self.shape_model.requires_grad_(False)
 
-        self.condition = craftsman.find(self.cfg.condition_model_type)(self.cfg.condition_model)
+        self.condition = None
         
-        self.denoiser_model = craftsman.find(self.cfg.denoiser_model_type)(self.cfg.denoiser_model)
+        self.denoiser_model = None
 
         self.noise_scheduler = craftsman.find(self.cfg.noise_scheduler_type)(**self.cfg.noise_scheduler)
 

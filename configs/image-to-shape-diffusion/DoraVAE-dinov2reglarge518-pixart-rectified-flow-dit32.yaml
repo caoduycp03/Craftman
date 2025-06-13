@@ -57,6 +57,21 @@ system:
     use_flash: true
     use_checkpoint: true
     
+
+  condition_model_type: "clip-dinov2-embedder"
+  condition_model:
+    freeze_modulation_clip: true
+    freeze_modulation_dino: true
+    encode_camera: false
+    camera_embeds_dim: 0
+    n_views: ${data.n_views}
+    empty_embeds_ratio: 0.1
+    normalize_embeds: false
+    zero_uncond_embeds: true
+    linear_proj_init: constant
+    image_size_dino: 224
+    image_size_clip: 224
+
   denoiser_model_type: "pixart-denoiser"
   denoiser_model:
     input_channels: ${system.shape_model.embed_dim}
