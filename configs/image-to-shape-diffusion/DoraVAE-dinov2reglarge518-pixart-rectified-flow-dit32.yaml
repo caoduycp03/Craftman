@@ -24,8 +24,8 @@ data:
   background_color: [0.5, 0.5, 0.5]
   marign_pix_dis: 30
 
-  batch_size: 5
-  num_workers: 4
+  batch_size: 2
+  num_workers: 2
 
 system_type: "shape-diffusion-system"
 system:
