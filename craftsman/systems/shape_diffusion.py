@@ -149,7 +149,6 @@ class ShapeDiffusionSystem(BaseSystem):
 
     def training_step(self, batch, batch_idx):
         out = self(batch)
-        breakpoint()
         loss = 0.
         for name, value in out.items():
             if name.startswith("loss_"):

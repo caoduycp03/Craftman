@@ -62,7 +62,7 @@ class BaseDataset(Dataset):
 
     def _load_shape_from_occupancy_or_sdf(self, index: int) -> Dict[str, Any]:
         # for sdf data with our own format
-        kl_embed = torch.load(f'{self.cfg.geo_data_path}/{self.uids[index]}.pt')
+        kl_embed = torch.load(f'{self.cfg.geo_data_path}/{self.uids[index]}.pt').unsqueeze(0)
         
         ret = {
             "uid": self.uids[index],

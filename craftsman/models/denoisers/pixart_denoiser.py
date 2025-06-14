@@ -124,7 +124,6 @@ class PixArtDinoDenoiser(BaseModule):
             sample (torch.FloatTensor): [bs, n_data, c]
 
         """
-        print(model_input.shape)
         B, n_data, _ = model_input.shape
 
         # 1. time
