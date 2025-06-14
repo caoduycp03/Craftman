@@ -191,7 +191,6 @@ def ddim_sample(scheduler: DDIMScheduler,
         # expand the latents if we are doing classifier free guidance
         latent_model_input = latents
 
-        print(t)
         # predict the noise residual
         timestep_tensor = torch.tensor([int(t)], dtype=torch.long, device=device)
         timestep_tensor = timestep_tensor.expand(latent_model_input.shape[0])
