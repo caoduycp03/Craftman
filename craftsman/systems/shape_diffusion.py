@@ -79,7 +79,6 @@ class ShapeDiffusionSystem(BaseSystem):
 
     def forward(self, batch: Dict[str, Any], skip_noise=False) -> Dict[str, Any]:
         # 1. encode shape latents
-        breakpoint()
         latents = batch['kl_embed'] * self.cfg.z_scale_factor
 
         # 3. sample noise that we"ll add to the latents
