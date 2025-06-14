@@ -41,7 +41,7 @@ system:
     n_samples: 16384
     with_sharp_data: true
     use_downsample: true
-    num_latents: 2048
+    num_latents: 256
     embed_dim: 64
     point_feats: 3
     out_dim: 1
