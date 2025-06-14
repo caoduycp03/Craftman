@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from craftsman import register
 from craftsman.utils.typing import *
 from craftsman.utils.config import parse_structured
-
+import copy
 from .base import BaseDataModuleConfig, BaseDataset
 
 @dataclass
@@ -35,12 +35,14 @@ class ObjaverseDataModule(pl.LightningDataModule):
         if stage in [None, "fit"]:
             self.train_dataset = ObjaverseDataset(self.cfg, "train")
         if stage in [None, "fit", "validate"]:
-            val_cfg = self.cfg.geo_data_path + '_val'
-            val_cfg = self.cfg.local_dir + '_val'
+            val_cfg = copy.deepcopy(self.cfg)
+            val_cfg.geo_data_path = self.cfg.geo_data_path + '_val'
+            val_cfg.local_dir = self.cfg.local_dir + '_val'
             self.val_dataset = ObjaverseDataset(val_cfg, "val")
         if stage in [None, "test", "predict"]:
-            test_cfg = self.cfg.geo_data_path + '_test'
-            test_cfg = self.cfg.local_dir + '_test'
+            test_cfg = copy.deepcopy(self.cfg)
+            test_cfg.geo_data_path = self.cfg.geo_data_path + '_test'
+            test_cfg.local_dir = self.cfg.local_dir + '_test'
             self.test_dataset = ObjaverseDataset(test_cfg, "test")
 
     def prepare_data(self):
