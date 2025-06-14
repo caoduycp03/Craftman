@@ -27,6 +27,10 @@ from craftsman.utils.callbacks import (
 from craftsman.utils.config import ExperimentConfig, load_config
 from craftsman.utils.misc import get_rank
 from craftsman.utils.typing import Optional
+import torch.multiprocessing as mp
+mp.set_start_method("spawn", force=True)
+
+
 class ColoredFilter(logging.Filter):
     """
     A logging filter to add color to certain log levels.
