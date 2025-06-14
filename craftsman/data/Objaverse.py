@@ -32,13 +32,16 @@ class ObjaverseDataModule(pl.LightningDataModule):
         self.cfg = parse_structured(ObjaverseDataModuleConfig, cfg)
 
     def setup(self, stage=None) -> None:
-        breakpoint()
         if stage in [None, "fit"]:
             self.train_dataset = ObjaverseDataset(self.cfg, "train")
         if stage in [None, "fit", "validate"]:
-            self.val_dataset = ObjaverseDataset(self.cfg, "val")
+            val_cfg = self.cfg.geo_data_path + '_val'
+            val_cfg = self.cfg.local_dir + '_val'
+            self.val_dataset = ObjaverseDataset(val_cfg, "val")
         if stage in [None, "test", "predict"]:
-            self.test_dataset = ObjaverseDataset(self.cfg, "test")
+            test_cfg = self.cfg.geo_data_path + '_test'
+            test_cfg = self.cfg.local_dir + '_test'
+            self.test_dataset = ObjaverseDataset(test_cfg, "test")
 
     def prepare_data(self):
         pass
