@@ -159,7 +159,7 @@ class ShapeDiffusionSystem(BaseSystem):
                 self.log(f"train_params/{name}", self.C(value))
 
         # Calculate average loss per sample in the batch
-        batch_size = batch['uid'].shape[0]  # Adjust key if needed
+        batch_size = len(batch['uid'])  # Adjust key if needed
         avg_loss = loss.item() / batch_size
         print(f"Batch {batch_idx}: Average loss per sample = {avg_loss}")
 
