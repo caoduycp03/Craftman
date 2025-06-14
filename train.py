@@ -29,7 +29,8 @@ from craftsman.utils.misc import get_rank
 from craftsman.utils.typing import Optional
 import torch.multiprocessing as mp
 mp.set_start_method("spawn", force=True)
-
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 class ColoredFilter(logging.Filter):
     """
