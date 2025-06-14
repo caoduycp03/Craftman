@@ -32,6 +32,7 @@ class ObjaverseDataModule(pl.LightningDataModule):
         self.cfg = parse_structured(ObjaverseDataModuleConfig, cfg)
 
     def setup(self, stage=None) -> None:
+        breakpoint()
         if stage in [None, "fit"]:
             self.train_dataset = ObjaverseDataset(self.cfg, "train")
         if stage in [None, "fit", "validate"]:
