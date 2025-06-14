@@ -251,6 +251,7 @@ def main(args, extras) -> None:
             return
         ckpt = torch.load(ckpt_path, map_location="cpu")
         system.set_resume_status(ckpt["epoch"], ckpt["global_step"])
+    breakpoint()
     if args.train:
         trainer.fit(system, datamodule=dm, ckpt_path=cfg.resume)
         trainer.test(system, datamodule=dm)
