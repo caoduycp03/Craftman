@@ -165,28 +165,32 @@ class ShapeDiffusionSystem(BaseSystem):
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         self.eval()
-        
+        os.makedirs(f"shapenet_bench_output", exist_ok=True)
+
         if get_rank() == 0:
-    
             sample_outputs = self.sample()
+            
             for i, sample_output in enumerate(sample_outputs):
-                breakpoint()
-                mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
+                torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
+            # for i, sample_output in enumerate(sample_outputs):
+            #     breakpoint()
+            #     mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
                 
-                self.save_mesh(
-                    f"it{self.true_global_step}/{batch['uid'][i]}.obj",
-                    mesh_v_f[0][0], mesh_v_f[0][1]
-                )
+            #     self.save_mesh(
+            #         f"it{self.true_global_step}/{batch['uid'][i]}.obj",
+            #         mesh_v_f[0][0], mesh_v_f[0][1]
+            #     )
 
         out = self(batch)
         if self.global_step == 0:
-            latents = self.shape_model.decode(out["latents"])
-            mesh_v_f, has_surface = self.shape_model.extract_geometry(latents=latents, extract_mesh_func=self.cfg.extract_mesh_func)
+            # latents = self.shape_model.decode(out["latents"])
+            # mesh_v_f, has_surface = self.shape_model.extract_geometry(latents=latents, extract_mesh_func=self.cfg.extract_mesh_func)
 
-            self.save_mesh(
-                f"it{self.true_global_step}/{batch['uid'][0]}_{batch['sel_idx'][0] if 'sel_idx' in batch.keys() else 0}.obj",
-                mesh_v_f[0][0], mesh_v_f[0][1]
-            )
+            # self.save_mesh(
+            #     f"it{self.true_global_step}/{batch['uid'][0]}_{batch['sel_idx'][0] if 'sel_idx' in batch.keys() else 0}.obj",
+            #     mesh_v_f[0][0], mesh_v_f[0][1]
+            # )
+            torch.save(out["latents"], f"shapenet_bench_output/sanity_check.pt")
 
         return {"val/loss": out["loss_diffusion"]}
  
@@ -248,10 +252,10 @@ class ShapeDiffusionSystem(BaseSystem):
             )
             for sample, t in sample_loop:
                 latents = sample
-            breakpoint()
-            outputs.append(self.shape_model.decode(latents / self.cfg.z_scale_factor, **kwargs))
+            # outputs.append(self.shape_model.decode(latents / self.cfg.z_scale_factor, **kwargs))
         
-        return outputs
+        # return outputs
+        return latents / self.cfg.z_scale_factor
 
     def on_validation_epoch_end(self):
         pass
