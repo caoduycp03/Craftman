@@ -170,6 +170,7 @@ class ShapeDiffusionSystem(BaseSystem):
     
             sample_outputs = self.sample()
             for i, sample_output in enumerate(sample_outputs):
+                breakpoint()
                 mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
                 
                 self.save_mesh(
@@ -247,6 +248,7 @@ class ShapeDiffusionSystem(BaseSystem):
             )
             for sample, t in sample_loop:
                 latents = sample
+            breakpoint()
             outputs.append(self.shape_model.decode(latents / self.cfg.z_scale_factor, **kwargs))
         
         return outputs

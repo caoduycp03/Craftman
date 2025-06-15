@@ -135,6 +135,7 @@ trainer:
   enable_progress_bar: true
   precision: 16-mixed
   strategy: 'ddp_find_unused_parameters_true'
+  resume: ./outputs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32/dora-autoencoder+n16384+pfeat3+lr0.0002/ckpts/last.ckpt
 
 checkpoint:
   save_last: true
