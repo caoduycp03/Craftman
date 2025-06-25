@@ -26,10 +26,10 @@ class EarlyEnvironmentSetter(Callback):
             world_size = trainer.num_devices
             local_rank = trainer.strategy.local_rank
 
-            # os.environ['WORLD_SIZE'] = str(world_size)
-            # os.environ['LOCAL_WORLD_SIZE'] = str(world_size)
-            # os.environ['LOCAL_RANK'] = str(local_rank)
-            # os.environ['RANK'] = str(local_rank)
+            os.environ['WORLD_SIZE'] = str(world_size)
+            os.environ['LOCAL_WORLD_SIZE'] = str(world_size)
+            os.environ['LOCAL_RANK'] = str(local_rank)
+            os.environ['RANK'] = str(local_rank)
 
             self.rank_set = True
 

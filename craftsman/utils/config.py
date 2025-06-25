@@ -50,6 +50,7 @@ def C_max(value: Any) -> float:
 
 @dataclass
 class ExperimentConfig:
+    local_rank: int = 0
     name: str = "default"
     description: str = ""
     tag: str = ""
@@ -110,6 +111,7 @@ def load_config(*yamls: str, cli_args: list = [], from_string=False, **kwargs) -
     cfg = OmegaConf.merge(*yaml_confs, cli_conf, kwargs)
     OmegaConf.resolve(cfg)
     assert isinstance(cfg, DictConfig)
+    breakpoint()
     scfg = parse_structured(ExperimentConfig, cfg)
     return scfg
 
