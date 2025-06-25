@@ -99,7 +99,7 @@ class ShapeDiffusionSystem(BaseSystem):
         noisy_z = self.noise_scheduler.add_noise(latents, noise, timesteps)
         breakpoint()
         # 6. diffusion model forward
-        noise_pred = self.denoiser_model(noisy_z, timesteps)
+        noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=batch['uid'])
 
         # 7. compute loss
         if self.noise_scheduler.config.prediction_type == "epsilon":
