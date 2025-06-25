@@ -206,7 +206,7 @@ class ShapeDiffusionSystem(BaseSystem):
  
     @torch.no_grad()
     def sample(self,
-               class_token,
+               class_token: torch.Tensor = None,
                sample_times: int = 1,
                steps: Optional[int] = None,
                eta: float = 0.0,
