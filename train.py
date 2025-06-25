@@ -249,7 +249,7 @@ def main(args, extras) -> None:
     trainer = Trainer(
         strategy=DeepSpeedStrategy(config="deepspeed_config.json"),
         accelerator="gpu",
-        devices=devices,
+        devices=n_gpus,
         callbacks=callbacks,
         logger=loggers,
         inference_mode=False,
