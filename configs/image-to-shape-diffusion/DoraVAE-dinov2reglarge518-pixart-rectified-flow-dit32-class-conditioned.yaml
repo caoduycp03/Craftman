@@ -5,10 +5,10 @@ seed: 0
 
 data_type: "Objaverse-datamodule"
 data:
-  local_dir: ./data_condtioned/train
+  local_dir: ./data_condtioned/data_condtioned
   load_geometry: true
   geo_data_type: "sdf" 
-  geo_data_path: ./data_condtioned/train
+  geo_data_path: ./data_condtioned/data_condtioned
   sampling_strategy: null
   n_samples: 16384
   
