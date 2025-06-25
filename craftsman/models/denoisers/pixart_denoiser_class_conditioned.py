@@ -87,7 +87,10 @@ class PixArtDinoDenoiser(BaseModule):
                         nn.SiLU(),
                         nn.Linear(self.cfg.width, self.cfg.width, bias=True)
                     )
-        
+        self.c_block = nn.Sequential(
+                        nn.SiLU(),
+                        nn.Linear(self.cfg.width, self.cfg.width, bias=True)
+                    )
          # final layer
         self.final_layer = T2IFinalLayer(self.cfg.width, self.cfg.output_channels, self.cfg.use_RMSNorm)
 
@@ -119,12 +122,9 @@ class PixArtDinoDenoiser(BaseModule):
 
         """
         B, n_data, _ = model_input.shape
-        breakpoint()
-        class_emb = self.class_embed[class_token]
-        
-        # 1. time
+        # 1. time + class
         t_emb = self.time_embed(timestep)
-        breakpoint()
+        class_emb = self.class_embed.weight[class_token:]
 
         # 4. denoiser
         latent = self.x_embed(model_input)
@@ -132,7 +132,6 @@ class PixArtDinoDenoiser(BaseModule):
 
         c0 = self.c_block(class_emb).unsqueeze(dim=1)
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
-        breakpoint()
         
         latent = self.denoiser(latent, t0, c0)
         condition_latent = t_emb + c_emb

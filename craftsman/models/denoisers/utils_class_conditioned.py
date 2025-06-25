@@ -171,10 +171,10 @@ class QwenVLDenoiser(nn.Module):
                     nn.init.constant_(module.bias, 0)
         self.apply(_basic_init)
         
-    def forward(self, x, timestep, past_key_values=None):
+    def forward(self, x, timestep, class_token, past_key_values=None):
         cache_position = None
 
-        inputs_embeds = torch.cat([timestep, x], dim=1)
+        inputs_embeds = torch.cat([class_token, timestep, x], dim=1)
         attention_mask = torch.ones(inputs_embeds.shape[1]).unsqueeze(0).repeat(inputs_embeds.shape[0], 1)
         
         output_lm = self.llm(
