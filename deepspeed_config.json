@@ -13,7 +13,7 @@
 
     "gradient_clipping": "auto",
     "steps_per_print": 1,
-    "train_batch_size": 16,
-    "train_micro_batch_size_per_gpu": 16,
+    "train_batch_size": 8,
+    "train_micro_batch_size_per_gpu": 8,
     "wall_clock_breakdown": false
 }
