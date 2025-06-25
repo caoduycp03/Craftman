@@ -1,4 +1,4 @@
-exp_root_dir: "outputs"
+exp_root_dir: "debug_outputs"
 name: "image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32"
 tag: "${rmspace:${system.shape_model_type}+n${data.n_samples}+pfeat${system.shape_model.point_feats}+lr${system.optimizer.args.lr},_}"
 seed: 0
@@ -77,7 +77,7 @@ system:
     input_channels: ${system.shape_model.embed_dim}
     output_channels:  ${system.shape_model.embed_dim}
     n_ctx: ${system.shape_model.num_latents}
-    width: 1024
+    width: 2048
     layers: 32
     heads: 16
     context_dim: 1024
@@ -126,7 +126,7 @@ system:
       T_max: 5000
       eta_min: 1e-6
 
-resume: ./outputs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32/dora-autoencoder+n16384+pfeat3+lr0.0002/ckpts/last.ckpt
+resume: debug_outputs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32/dora-autoencoder+n16384+pfeat3+lr0.0002/ckpts/last.ckpt
 
 trainer:
   num_nodes: 1
@@ -135,10 +135,10 @@ trainer:
   num_sanity_val_steps: 1
   check_val_every_n_epoch: 1
   enable_progress_bar: true
-  precision: 16-mixed
+  precision: bf16-mixed
   strategy: 'ddp_find_unused_parameters_true'
 
 checkpoint:
   save_last: true
   save_top_k: -1
-  every_n_train_steps: 5000
+  every_n_train_steps: 500000

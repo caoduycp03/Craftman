@@ -11,7 +11,7 @@ from typing import Optional
 from craftsman.utils.base import BaseModule
 from craftsman.models.denoisers.utils import *
 
-@craftsman.register("pixart-denoiser")
+@craftsman.register("pixart-denoiser-class-conditioned")
 class PixArtDinoDenoiser(BaseModule):
     @dataclass
     class Config(BaseModule.Config):
