@@ -100,9 +100,9 @@ class ShapeDiffusionSystem(BaseSystem):
         breakpoint()
         # 6. diffusion model forward
         if "table" in batch['uid']:
-            class_token = "table"
+            class_token = torch.tensor(0)
         else:
-            class_token = "chair"
+            class_token = torch.tensor(1)
         noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=class_token)
 
         # 7. compute loss
@@ -175,9 +175,9 @@ class ShapeDiffusionSystem(BaseSystem):
 
         if get_rank() == 0:
             if "table" in batch['uid']:
-                class_token = "table"
+                class_token = torch.tensor(0)
             else:
-                class_token = "chair"
+                class_token = torch.tensor(1)
             sample_outputs = self.sample(class_token)
             
             for i, sample_output in enumerate(sample_outputs):
@@ -206,7 +206,7 @@ class ShapeDiffusionSystem(BaseSystem):
  
     @torch.no_grad()
     def sample(self,
-               class_token: str,
+               class_token,
                sample_times: int = 1,
                steps: Optional[int] = None,
                eta: float = 0.0,

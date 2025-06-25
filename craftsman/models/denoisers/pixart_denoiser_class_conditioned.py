@@ -106,7 +106,7 @@ class PixArtDinoDenoiser(BaseModule):
     def forward(self,
                 model_input: torch.FloatTensor,
                 timestep: torch.LongTensor,
-                class_token: str):
+                class_token):
         
         r"""
         Args:
@@ -120,10 +120,7 @@ class PixArtDinoDenoiser(BaseModule):
         """
         B, n_data, _ = model_input.shape
         breakpoint()
-        if class_token == "table":
-            class_emb = self.class_embed(torch.tensor([0]))
-        else:
-            class_emb = self.class_embed(torch.tensor([1]))
+        class_emb = self.class_embed[class_token]
         
         # 1. time
         t_emb = self.time_embed(timestep)
