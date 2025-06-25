@@ -41,7 +41,7 @@ class PixArtDinoDenoiser(BaseModule):
         super().configure()
 
         # timestep embedding
-        self.class_embed = nn.Embedding(self.cfg.class_dim, self.cfg.width)
+        self.class_embed = nn.Embedding(self.cfg.class_dim, self.cfg.width).requires_grad_(True)
         self.time_embed = TimestepEmbedder(self.cfg.width)
 
         # x embedding
@@ -134,7 +134,7 @@ class PixArtDinoDenoiser(BaseModule):
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
         
         latent = self.denoiser(latent, t0, c0)
-        condition_latent = t_emb + c_emb
+        condition_latent = t_emb + class_emb
         latent = self.final_layer(latent, condition_latent)
 
         return latent
