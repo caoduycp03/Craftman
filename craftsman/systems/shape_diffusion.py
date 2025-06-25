@@ -103,7 +103,6 @@ class ShapeDiffusionSystem(BaseSystem):
             for uid in uids
         ]
         class_tokens = torch.tensor(class_tokens)
-        breakpoint()
         noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=class_tokens)
 
         # 7. compute loss
