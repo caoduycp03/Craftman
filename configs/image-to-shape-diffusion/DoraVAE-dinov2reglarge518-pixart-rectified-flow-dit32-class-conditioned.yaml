@@ -125,7 +125,7 @@ system:
   scheduler:
     name: CosineAnnealingLR
     args:
-      T_max: 5000
+      T_max: 1902000
       eta_min: 1e-5
 
 trainer:
