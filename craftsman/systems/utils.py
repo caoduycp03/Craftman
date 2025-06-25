@@ -151,6 +151,7 @@ def ddim_sample(scheduler: DDIMScheduler,
                 generator: Optional[torch.Generator] = None,
                 device: torch.device = "cuda:0",
                 dtype = torch.bfloat16,
+                class_token: str = None,
                 disable_prog: bool = True):
 
     assert steps > 0, f"{steps} must > 0."
@@ -193,7 +194,7 @@ def ddim_sample(scheduler: DDIMScheduler,
         # predict the noise residual
         timestep_tensor = torch.tensor([int(t)], dtype=torch.long, device=device)
         timestep_tensor = timestep_tensor.expand(latent_model_input.shape[0])
-        noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor)
+        noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor, class_token)
 
         # compute the previous noisy sample x_t -> x_t-1
         latents = scheduler.step(

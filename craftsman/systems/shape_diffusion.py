@@ -99,7 +99,11 @@ class ShapeDiffusionSystem(BaseSystem):
         noisy_z = self.noise_scheduler.add_noise(latents, noise, timesteps)
         breakpoint()
         # 6. diffusion model forward
-        noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=batch['uid'])
+        if "table" in batch['uid']:
+            class_token = "table"
+        else:
+            class_token = "chair"
+        noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=class_token)
 
         # 7. compute loss
         if self.noise_scheduler.config.prediction_type == "epsilon":
@@ -170,7 +174,11 @@ class ShapeDiffusionSystem(BaseSystem):
         os.makedirs(f"shapenet_bench_output", exist_ok=True)
 
         if get_rank() == 0:
-            sample_outputs = self.sample()
+            if "table" in batch['uid']:
+                class_token = "table"
+            else:
+                class_token = "chair"
+            sample_outputs = self.sample(class_token)
             
             for i, sample_output in enumerate(sample_outputs):
                 torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
@@ -198,6 +206,7 @@ class ShapeDiffusionSystem(BaseSystem):
  
     @torch.no_grad()
     def sample(self,
+               class_token: str,
                sample_times: int = 1,
                steps: Optional[int] = None,
                eta: float = 0.0,
@@ -250,7 +259,8 @@ class ShapeDiffusionSystem(BaseSystem):
                 device=self.device,
                 eta=eta,
                 disable_prog=False,
-                generator= generator
+                generator= generator,
+                class_token=class_token
             )
             for sample, t in sample_loop:
                 latents = sample
