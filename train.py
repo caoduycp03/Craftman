@@ -130,17 +130,6 @@ def load_custom_modules():
 
 
 def main(args, extras) -> None:
-    # Filter out distributed launcher arguments
-    filtered_extras = []
-    skip_keys = {"--local_rank", "--local-rank", "--node_rank", "--node-rank", "--master_addr", "--master-addr", "--master_port", "--master-port", "--nnodes", "--nproc_per_node", "--nproc-per-node"}
-    i = 0
-    while i < len(extras):
-        if extras[i] in skip_keys:
-            i += 2  # skip key and its value
-        else:
-            filtered_extras.append(extras[i])
-            i += 1
-
     # set CUDA_VISIBLE_DEVICES if needed, then import pytorch-lightning
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     env_gpus_str = os.environ.get("CUDA_VISIBLE_DEVICES", None)
@@ -181,7 +170,7 @@ def main(args, extras) -> None:
 
     # parse YAML config to OmegaConf
     cfg: ExperimentConfig
-    cfg = load_config(args.config, cli_args=filtered_extras, n_gpus=n_gpus)
+    cfg = load_config(args.config, cli_args=extras, n_gpus=n_gpus)
 
     # set a different seed for each device
     rank = get_rank()
