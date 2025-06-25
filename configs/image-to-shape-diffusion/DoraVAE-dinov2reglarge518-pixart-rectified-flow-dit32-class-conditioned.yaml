@@ -31,7 +31,7 @@ system_type: "shape-diffusion-system"
 system:
   val_samples_json: "val_data/images/val_samples_rgb_image.json"
   z_scale_factor: 1.0
-  guidance_scale: 7.5
+  guidance_scale: 3.0
   num_inference_steps: 50
   eta: 0.0
   extract_mesh_func: mc

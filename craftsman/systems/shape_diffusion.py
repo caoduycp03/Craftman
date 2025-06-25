@@ -187,7 +187,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
         out = self(batch)
         if self.global_step == 0:
-            torch.save(out["latents"], f"shapenet_bench_output/sanity_check.pt")
+            torch.save(out["latents"], f"shapenet_class_condtioned/sanity_check.pt")
 
         return {"val/loss": out["loss_diffusion"]}
  
@@ -197,36 +197,21 @@ class ShapeDiffusionSystem(BaseSystem):
                sample_times: int = 1,
                steps: Optional[int] = None,
                eta: float = 0.0,
+               guidance_scale: Optional[float] = None,
                seed: Optional[int] = None,
                **kwargs):
+
         if steps is None:
             steps = self.cfg.num_inference_steps
-        # if guidance_scale is None:
-        #     guidance_scale = self.cfg.guidance_scale
-        # do_classifier_free_guidance = guidance_scale != 1.0
+        if guidance_scale is None:
+            guidance_scale = self.cfg.guidance_scale
+        do_classifier_free_guidance = guidance_scale != 1.0
 
-        # # conditional encode
-        # if "image" in sample_inputs:
-        #     sample_inputs["image"] = [Image.open(img) if type(img) == str else img for img in sample_inputs["image"]]
-        #     cond = self.condition.encode_image(sample_inputs["image"])
-        #     if do_classifier_free_guidance:
-        #         un_cond = self.condition.empty_image_embeds.repeat(len(sample_inputs["image"]), 1, 1).to(cond)
-        #         cond = torch.cat([un_cond, cond], dim=0)
-        # elif "mvimages" in sample_inputs: # by default 4 views
-        #     bs = len(sample_inputs["mvimages"])
-        #     cond = []
-        #     for image in sample_inputs["mvimages"]:
-        #         if isinstance(image, list) and isinstance(image[0], str):
-        #             sample_inputs["image"] = [Image.open(img) for img in image] # List[PIL]
-        #         else:
-        #             sample_inputs["image"] = image
-        #         cond += [self.condition.encode_image(sample_inputs["image"])]
-        #     cond = torch.stack(cond, dim=0).view(bs, -1, self.cfg.denoiser_model.context_dim)
-        #     if do_classifier_free_guidance:
-        #         un_cond = self.condition.empty_image_embeds.unsqueeze(0).repeat(len(sample_inputs["mvimages"]), 1, 1, 1).view(bs, cond.shape[1], self.cfg.denoiser_model.context_dim).to(cond) # shape 为[len(sample_inputs["mvimages"], 4*(num_latents+1), context_dim]
-        #         cond = torch.cat([un_cond, cond], dim=0).view(bs * 2, -1, cond[0].shape[-1]) 
-        # else:
-        #     raise NotImplementedError("Only image or mvimages condition is supported.")
+        # conditional encode
+        breakpoint()
+        if do_classifier_free_guidance:
+            un_cond = self.condition.empty_image_embeds.repeat(len(sample_inputs["image"]), 1, 1).to(cond)
+            cond = torch.cat([un_cond, cond], dim=0)
 
         outputs = []
         latents = None
@@ -243,6 +228,8 @@ class ShapeDiffusionSystem(BaseSystem):
                 shape=self.shape_model.latent_shape,
                 bsz=1,
                 steps=steps,
+                guidance_scale=guidance_scale,
+                do_classifier_free_guidance=do_classifier_free_guidance,
                 device=self.device,
                 eta=eta,
                 disable_prog=False,
