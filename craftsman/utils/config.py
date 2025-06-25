@@ -111,7 +111,6 @@ def load_config(*yamls: str, cli_args: list = [], from_string=False, **kwargs) -
     cfg = OmegaConf.merge(*yaml_confs, cli_conf, kwargs)
     OmegaConf.resolve(cfg)
     assert isinstance(cfg, DictConfig)
-    breakpoint()
     del cfg['--local-rank']
     scfg = parse_structured(ExperimentConfig, cfg)
     return scfg
