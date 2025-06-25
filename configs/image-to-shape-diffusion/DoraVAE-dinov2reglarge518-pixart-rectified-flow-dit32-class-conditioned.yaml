@@ -29,6 +29,7 @@ data:
 
 system_type: "shape-diffusion-system"
 system:
+  num_class: 2
   val_samples_json: "val_data/images/val_samples_rgb_image.json"
   z_scale_factor: 1.0
   guidance_scale: 3.0

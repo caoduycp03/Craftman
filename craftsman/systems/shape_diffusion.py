@@ -209,7 +209,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
         # conditional encode
         if do_classifier_free_guidance:
-            unclass_token = torch.tensor([2]).to(class_token)
+            unclass_token = torch.tensor([self.cfg.num_class]).to(class_token)
             class_token = torch.cat([unclass_token, class_token], dim=0)
 
         outputs = []

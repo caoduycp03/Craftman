@@ -126,7 +126,7 @@ class PixArtDinoDenoiser(BaseModule):
         t_emb = self.time_embed(timestep)
         zeros_for_uncond = torch.zeros_like(self.class_embed.weight[0]).unsqueeze(0).to(self.class_embed.weight.device)
         class_embed = torch.cat([self.class_embed.weight, zeros_for_uncond], dim = 0)        
-        class_emb = class_embed[class_token.to(class_embed.weight.device)]
+        class_emb = class_embed[class_token.to(class_embed.device)]
         breakpoint()
         # 4. denoiser
         latent = self.x_embed(model_input)
