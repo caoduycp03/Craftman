@@ -245,7 +245,6 @@ def main(args, extras) -> None:
     #     **cfg.trainer
     #     # profiler="pytorch",
     # )
-    breakpoint()
     trainer = Trainer(
         strategy=DeepSpeedStrategy(config="deepspeed_config.json"),
         accelerator="gpu",
