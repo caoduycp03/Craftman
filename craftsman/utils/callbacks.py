@@ -23,7 +23,7 @@ class EarlyEnvironmentSetter(Callback):
     
     def setup(self, trainer, pl_module, stage):
         if not self.rank_set:
-            # breakpoint()
+            breakpoint()
             world_size = trainer.num_devices
             local_rank = trainer.strategy.local_rank
 

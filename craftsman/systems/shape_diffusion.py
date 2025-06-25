@@ -171,7 +171,7 @@ class ShapeDiffusionSystem(BaseSystem):
     def validation_step(self, batch, batch_idx):
 
         # self.eval()
-        # os.makedirs(f"shapenet_bench_output", exist_ok=True)
+        # os.makedirs(f"shapenet_class_condtioned", exist_ok=True)
 
         # if get_rank() == 0:
         #     uids = batch['uid']
@@ -183,7 +183,7 @@ class ShapeDiffusionSystem(BaseSystem):
         #     sample_outputs = self.sample(class_token=class_tokens)
             
         #     for i, sample_output in enumerate(sample_outputs):
-        #         torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
+        #         torch.save(sample_output, f"shapenet_class_condtioned/it{self.true_global_step}_{batch['uid'][i]}.pt")
         #     # for i, sample_output in enumerate(sample_outputs):
         #     #     breakpoint()
         #     #     mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
