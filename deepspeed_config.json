@@ -19,7 +19,6 @@
         "ignore_unused_parameters": true
     },
 
-    "gradient_accumulation_steps": 1,
     "gradient_clipping": "auto",
     "steps_per_print": 1,
     "train_batch_size": 32,
