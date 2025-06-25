@@ -78,7 +78,6 @@ class ShapeDiffusionSystem(BaseSystem):
         self.denoise_scheduler = craftsman.find(self.cfg.denoise_scheduler_type)(**self.cfg.denoise_scheduler)
 
     def forward(self, batch: Dict[str, Any], skip_noise=False) -> Dict[str, Any]:
-        breakpoint()
         # 1. encode shape latents
         latents = batch['kl_embed'] * self.cfg.z_scale_factor
 
@@ -169,7 +168,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        breakpoint()
+
         self.eval()
         os.makedirs(f"shapenet_bench_output", exist_ok=True)
 
