@@ -35,6 +35,7 @@ class ShapeDiffusionSystem(BaseSystem):
         extract_mesh_func: str = "mc"
 
         # diffusion config
+        num_class: int = 2
         z_scale_factor: float = 1.0
         guidance_scale: float = 7.5
         num_inference_steps: int = 50
@@ -209,7 +210,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
         # conditional encode
         if do_classifier_free_guidance:
-            unclass_token = torch.tensor([self.cfg.num_class]).to(class_token)
+            unclass_token = torch.tensor([num_class]).to(class_token)
             class_token = torch.cat([unclass_token, class_token], dim=0)
 
         outputs = []
