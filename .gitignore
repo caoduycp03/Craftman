@@ -168,7 +168,6 @@ archive
 *.txt
 *.log
 /.vscode
-*.sh
 .gradio
 data
 !data/validation
