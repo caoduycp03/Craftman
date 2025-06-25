@@ -40,6 +40,7 @@ class PixArtDinoDenoiser(BaseModule):
         super().configure()
 
         # timestep embedding
+        self.class_embed = nn.Embedding(self.cfg.class_dim, self.cfg.width)
         self.time_embed = TimestepEmbedder(self.cfg.width)
 
         # x embedding
