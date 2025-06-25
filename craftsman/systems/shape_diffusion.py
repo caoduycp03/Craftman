@@ -103,6 +103,7 @@ class ShapeDiffusionSystem(BaseSystem):
             for uid in uids
         ]
         class_tokens = torch.tensor(class_tokens)
+        breakpoint()
         noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=class_tokens)
 
         # 7. compute loss
@@ -170,28 +171,29 @@ class ShapeDiffusionSystem(BaseSystem):
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
 
-        self.eval()
-        os.makedirs(f"shapenet_bench_output", exist_ok=True)
+        # self.eval()
+        # os.makedirs(f"shapenet_bench_output", exist_ok=True)
 
-        if get_rank() == 0:
-            uids = batch['uid']
-            class_tokens = [
-                0 if "table" in uid else 1
-                for uid in uids
-            ]
-            class_tokens = torch.tensor(class_tokens)
-            sample_outputs = self.sample(class_token=class_tokens)
+        # if get_rank() == 0:
+        #     uids = batch['uid']
+        #     class_tokens = [
+        #         0 if "table" in uid else 1
+        #         for uid in uids
+        #     ]
+        #     class_tokens = torch.tensor(class_tokens)
+        #     sample_outputs = self.sample(class_token=class_tokens)
             
-            for i, sample_output in enumerate(sample_outputs):
-                torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
-            # for i, sample_output in enumerate(sample_outputs):
-            #     breakpoint()
-            #     mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
+        #     for i, sample_output in enumerate(sample_outputs):
+        #         torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
+        #     # for i, sample_output in enumerate(sample_outputs):
+        #     #     breakpoint()
+        #     #     mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
                 
-            #     self.save_mesh(
-            #         f"it{self.true_global_step}/{batch['uid'][i]}.obj",
-            #         mesh_v_f[0][0], mesh_v_f[0][1]
-            #     )
+        #     #     self.save_mesh(
+        #     #         f"it{self.true_global_step}/{batch['uid'][i]}.obj",
+        #     #         mesh_v_f[0][0], mesh_v_f[0][1]
+        #     #     )
+        pass
 
         out = self(batch)
         if self.global_step == 0:
