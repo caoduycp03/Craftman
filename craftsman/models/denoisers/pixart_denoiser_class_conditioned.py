@@ -42,6 +42,9 @@ class PixArtDinoDenoiser(BaseModule):
 
         # timestep embedding
         self.class_embed = nn.Embedding(self.cfg.class_dim, self.cfg.width).requires_grad_(True)
+        breakpoint()
+        zeros_for_uncond = torch.zeros_like(self.class_embed.weight[0])
+        self.class_embed = torch.cat([self.class_embed.weight, zeros_for_uncond], dim = 0)
         self.time_embed = TimestepEmbedder(self.cfg.width)
 
         # x embedding

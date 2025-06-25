@@ -208,10 +208,9 @@ class ShapeDiffusionSystem(BaseSystem):
         do_classifier_free_guidance = guidance_scale != 1.0
 
         # conditional encode
-        breakpoint()
         if do_classifier_free_guidance:
-            un_cond = self.condition.empty_image_embeds.repeat(len(sample_inputs["image"]), 1, 1).to(cond)
-            cond = torch.cat([un_cond, cond], dim=0)
+            unclass_token = torch.tensor([2]).to(class_token)
+            class_token = torch.cat([unclass_token, class_token], dim=0)
 
         outputs = []
         latents = None

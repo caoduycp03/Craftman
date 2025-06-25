@@ -157,6 +157,7 @@ def ddim_sample(scheduler: DDIMScheduler,
                 disable_prog: bool = True):
 
     assert steps > 0, f"{steps} must > 0."
+    # init latents
 
     latents = torch.randn(
         (bsz, *shape),
@@ -191,13 +192,20 @@ def ddim_sample(scheduler: DDIMScheduler,
     # reverse
     for i, t in enumerate(tqdm(timesteps, disable=disable_prog, desc="DDIM Sampling:", leave=False)):
         # expand the latents if we are doing classifier free guidance
-        latent_model_input = latents
-
+        latent_model_input = latents.repeat_interleave(2, dim=0)
         # predict the noise residual
         timestep_tensor = torch.tensor([int(t)], dtype=torch.long, device=device)
         timestep_tensor = timestep_tensor.expand(latent_model_input.shape[0])
         class_token.to(device=timestep_tensor.device)
+        breakpoint()
         noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor, class_token)
+        breakpoint()
+        # perform guidance
+        if do_classifier_free_guidance:
+            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+            noise_pred = noise_pred_uncond + guidance_scale * (
+                    noise_pred_text - noise_pred_uncond
+            )        
 
         # compute the previous noisy sample x_t -> x_t-1
         latents = scheduler.step(
