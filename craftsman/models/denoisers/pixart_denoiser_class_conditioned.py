@@ -127,13 +127,17 @@ class PixArtDinoDenoiser(BaseModule):
         zeros_for_uncond = torch.zeros_like(self.class_embed.weight[0]).unsqueeze(0).to(self.class_embed.weight.device)
         class_embed = torch.cat([self.class_embed.weight, zeros_for_uncond], dim = 0)        
         class_emb = class_embed[class_token.to(class_embed.device)]
-        breakpoint()
         # 4. denoiser
         latent = self.x_embed(model_input)
         # visual_cond = torch.zeros_like(latent).to(device=latent.device, dtype=latent.dtype)
-        c0 = self.c_block(class_emb).unsqueeze(dim=1)
+        
+        if zeros_for_uncond in class_emb:
+            c0 = self.c_block(class_emb).unsqueeze(dim=1)
+            c0[0] = 0
+        else:
+            c0 = self.c_block(class_emb).unsqueeze(dim=1)
+        
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
-        breakpoint()
         latent = self.denoiser(latent, t0, c0)
         condition_latent = t_emb + class_emb
         latent = self.final_layer(latent, condition_latent)
