@@ -171,7 +171,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        cfgs = [1.0]
+        cfgs = [1.0, 3.0, 7.5]
         cfg = random.choice(cfgs)
         self.eval()
         os.makedirs(f"shapenet_class_condtioned", exist_ok=True)
