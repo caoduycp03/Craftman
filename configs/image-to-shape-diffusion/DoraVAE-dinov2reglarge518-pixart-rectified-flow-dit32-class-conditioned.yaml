@@ -127,8 +127,6 @@ system:
       T_max: 5000
       eta_min: 1e-6
 
-resume: debug_outputs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32/dora-autoencoder+n16384+pfeat3+lr0.0002/ckpts/last.ckpt
-
 trainer:
   num_nodes: 1
   max_epochs: 100000
