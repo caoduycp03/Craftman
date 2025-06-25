@@ -9,6 +9,7 @@ from skimage import measure
 from einops import repeat
 from tqdm import tqdm
 from PIL import Image
+import random
 
 from diffusers import (
     DDPMScheduler,
@@ -170,7 +171,8 @@ class ShapeDiffusionSystem(BaseSystem):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-
+        cfgs = [1.0]
+        cfg = random.choice(cfgs)
         self.eval()
         os.makedirs(f"shapenet_class_condtioned", exist_ok=True)
 
@@ -181,10 +183,10 @@ class ShapeDiffusionSystem(BaseSystem):
                 for uid in uids
             ]
             class_tokens = torch.tensor(class_tokens)
-            sample_outputs = self.sample(class_token=class_tokens)
+            sample_outputs = self.sample(class_token=class_tokens, guidance_scale=cfg)
             
             for i, sample_output in enumerate(sample_outputs):
-                torch.save(sample_output, f"shapenet_class_condtioned/it{self.true_global_step}_{batch['uid'][i]}.pt")
+                torch.save(sample_output, f"shapenet_class_condtioned/it{self.true_global_step}_{batch['uid'][i]}_cfg{cfg}.pt")
 
         out = self(batch)
         if self.global_step == 0:
