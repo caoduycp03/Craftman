@@ -9,7 +9,7 @@ import re
 from transformers import Qwen2_5_VLForConditionalGeneration
 from typing import Optional
 from craftsman.utils.base import BaseModule
-from craftsman.models.denoisers.utils import *
+from craftsman.models.denoisers.utils_class_conditioned import *
 
 @craftsman.register("pixart-denoiser-class-conditioned")
 class PixArtDinoDenoiser(BaseModule):
