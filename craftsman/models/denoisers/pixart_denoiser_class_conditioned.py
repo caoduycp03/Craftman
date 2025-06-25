@@ -119,10 +119,11 @@ class PixArtDinoDenoiser(BaseModule):
 
         """
         B, n_data, _ = model_input.shape
+        breakpoint()
         if class_token == "table":
-            class_token_emb = self.class_embed(torch.tensor([0]))
+            class_emb = self.class_embed(torch.tensor([0]))
         else:
-            class_token_emb = self.class_embed(torch.tensor([1]))
+            class_emb = self.class_embed(torch.tensor([1]))
         
         # 1. time
         t_emb = self.time_embed(timestep)
@@ -132,11 +133,13 @@ class PixArtDinoDenoiser(BaseModule):
         latent = self.x_embed(model_input)
         # visual_cond = torch.zeros_like(latent).to(device=latent.device, dtype=latent.dtype)
 
+        c0 = self.c_block(class_emb).unsqueeze(dim=1)
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
         breakpoint()
         
-        latent = self.denoiser(latent, t0)
-        latent = self.final_layer(latent, t_emb)
+        latent = self.denoiser(latent, t0, c0)
+        condition_latent = t_emb + c_emb
+        latent = self.final_layer(latent, condition_latent)
 
         return latent
 
