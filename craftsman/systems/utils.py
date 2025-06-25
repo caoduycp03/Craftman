@@ -195,7 +195,6 @@ def ddim_sample(scheduler: DDIMScheduler,
         timestep_tensor = torch.tensor([int(t)], dtype=torch.long, device=device)
         timestep_tensor = timestep_tensor.expand(latent_model_input.shape[0])
         class_token.to(device=timestep_tensor.device)
-        breakpoint()
         noise_pred = diffusion_model.forward(latent_model_input, timestep_tensor, class_token)
 
         # compute the previous noisy sample x_t -> x_t-1
