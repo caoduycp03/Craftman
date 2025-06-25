@@ -236,14 +236,22 @@ def main(args, extras) -> None:
             )
         )()
 
+    # trainer = Trainer(
+    #     callbacks=callbacks,
+    #     logger=loggers,
+    #     accelerator="gpu",
+    #     devices=devices,
+    #     **cfg.trainer
+    #     # profiler="pytorch",
+    # )
     trainer = Trainer(
+        strategy=DeepSpeedStrategy(config="deepspeed_config.json"),
+        accelerator="deepspeed",
+        devices=devices,
         callbacks=callbacks,
         logger=loggers,
         inference_mode=False,
-        accelerator="gpu",
-        devices=devices,
         **cfg.trainer
-        # profiler="pytorch",
     )
 
     def set_system_status(system: BaseSystem, ckpt_path: Optional[str]):
