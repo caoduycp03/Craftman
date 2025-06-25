@@ -165,6 +165,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
+        breakpoint()
         self.eval()
         os.makedirs(f"shapenet_bench_output", exist_ok=True)
 
