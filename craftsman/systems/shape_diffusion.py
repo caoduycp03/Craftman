@@ -96,7 +96,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
         # 5. add noise
         noisy_z = self.noise_scheduler.add_noise(latents, noise, timesteps)
-
+        breakpoint()
         # 6. diffusion model forward
         noise_pred = self.denoiser_model(noisy_z, timesteps)
 
