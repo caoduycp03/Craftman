@@ -1,4 +1,4 @@
-exp_root_dir: "debug_outputs"
+exp_root_dir: "class_conditioned_debug_outputs"
 name: "image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32"
 tag: "${rmspace:${system.shape_model_type}+n${data.n_samples}+pfeat${system.shape_model.point_feats}+lr${system.optimizer.args.lr},_}"
 seed: 0
