@@ -5,7 +5,7 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --cpus-per-gpu=32
 #SBATCH --mem-per-gpu=40GB
-#SBATCH --partition=moviana
+#SBATCH --partition=movianr
 #SBATCH --mail-type=all # option sendmail: begin,fail.end,requeue,all
 #SBATCH --mail-user=v.duycd@vinai.io
 
