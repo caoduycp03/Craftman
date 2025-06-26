@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-
+import os
 import numpy as np
 import json
 import copy
@@ -27,7 +27,7 @@ from craftsman.systems.utils import compute_snr, ddim_sample
 
 
 # DEBUG = True
-@craftsman.register("shape-diffusion-system")
+@craftsman.register("shape-diffusion-nocfg-system")
 class ShapeDiffusionSystem(BaseSystem):
     @dataclass
     class Config(BaseSystem.Config):
@@ -65,43 +65,21 @@ class ShapeDiffusionSystem(BaseSystem):
 
     def configure(self):
         super().configure()
-        breakpoint
-        self.shape_model = None
+        self.shape_model = craftsman.find(self.cfg.shape_model_type)(self.cfg.shape_model)
         self.shape_model.eval()
         self.shape_model.requires_grad_(False)
 
         self.condition = None
         
-        self.denoiser_model = None
+        self.denoiser_model = craftsman.find(self.cfg.denoiser_model_type)(self.cfg.denoiser_model)
 
         self.noise_scheduler = craftsman.find(self.cfg.noise_scheduler_type)(**self.cfg.noise_scheduler)
 
         self.denoise_scheduler = craftsman.find(self.cfg.denoise_scheduler_type)(**self.cfg.denoise_scheduler)
-        breakpoint()
+
     def forward(self, batch: Dict[str, Any], skip_noise=False) -> Dict[str, Any]:
         # 1. encode shape latents
-        shape_embeds, kl_embed, _ = self.shape_model.encode(
-            batch["surface"][..., :3 + self.cfg.shape_model.point_feats], 
-            sample_posterior=True
-        )
-
-        latents = kl_embed * self.cfg.z_scale_factor
-
-        # 2. gain condition. assert not (text_cond and image_cond), "Only one of text or image condition must be provided."
-        if "image" in batch and batch['image'].dim() == 5:
-            if self.training:
-                bs, n_images = batch['image'].shape[:2]
-                batch['image'] = batch['image'].view(bs*n_images, *batch['image'].shape[-3:])
-            else:
-                batch['image'] = batch['image'][:, 0, ...]
-                n_images = 1
-                bs = batch['image'].shape[0]
-            cond_latents = self.condition(batch).to(latents)
-            latents = latents.unsqueeze(1).repeat(1, n_images, 1, 1)
-            latents = latents.view(bs*n_images, *latents.shape[-2:])
-        else:
-            cond_latents = self.condition(batch).to(latents)
-            cond_latents = cond_latents.view(cond_latents.shape[0], -1, cond_latents.shape[-1])
+        latents = batch['kl_embed'] * self.cfg.z_scale_factor
 
         # 3. sample noise that we"ll add to the latents
         noise = torch.randn_like(latents).to(latents) # [batch_size, n_token, latent_dim]
@@ -120,7 +98,7 @@ class ShapeDiffusionSystem(BaseSystem):
         noisy_z = self.noise_scheduler.add_noise(latents, noise, timesteps)
 
         # 6. diffusion model forward
-        noise_pred = self.denoiser_model(noisy_z, timesteps, cond_latents)
+        noise_pred = self.denoiser_model(noisy_z, timesteps)
 
         # 7. compute loss
         if self.noise_scheduler.config.prediction_type == "epsilon":
@@ -170,7 +148,6 @@ class ShapeDiffusionSystem(BaseSystem):
 
     def training_step(self, batch, batch_idx):
         out = self(batch)
-
         loss = 0.
         for name, value in out.items():
             if name.startswith("loss_"):
@@ -181,79 +158,77 @@ class ShapeDiffusionSystem(BaseSystem):
             if name.startswith("lambda_"):
                 self.log(f"train_params/{name}", self.C(value))
 
+        print(f"Batch {batch_idx}: Average loss per sample = {loss}")
+
         return {"loss": loss}
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         self.eval()
-        
+        os.makedirs(f"shapenet_bench_output", exist_ok=True)
+
         if get_rank() == 0:
-            sample_inputs = json.loads(open(self.cfg.val_samples_json).read()) # condition
-            sample_inputs_ = copy.deepcopy(sample_inputs)
-            sample_outputs = self.sample(sample_inputs) # list
+            sample_outputs = self.sample()
+            
             for i, sample_output in enumerate(sample_outputs):
-                mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
+                torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
+            # for i, sample_output in enumerate(sample_outputs):
+            #     breakpoint()
+            #     mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
                 
-                for j in range(len(mesh_v_f)):
-                    if "image" in sample_inputs_:
-                        name = sample_inputs_["image"][j].split("/")[-1].replace(".png", "")
-                    elif "mvimages" in sample_inputs_:
-                        name = sample_inputs_["mvimages"][j][0].split("/")[-2].replace(".png", "")
-                    self.save_mesh(
-                        f"it{self.true_global_step}/{name}_{i}.obj",
-                        mesh_v_f[j][0], mesh_v_f[j][1]
-                    )
+            #     self.save_mesh(
+            #         f"it{self.true_global_step}/{batch['uid'][i]}.obj",
+            #         mesh_v_f[0][0], mesh_v_f[0][1]
+            #     )
 
         out = self(batch)
         if self.global_step == 0:
-            latents = self.shape_model.decode(out["latents"])
-            mesh_v_f, has_surface = self.shape_model.extract_geometry(latents=latents, extract_mesh_func=self.cfg.extract_mesh_func)
+            # latents = self.shape_model.decode(out["latents"])
+            # mesh_v_f, has_surface = self.shape_model.extract_geometry(latents=latents, extract_mesh_func=self.cfg.extract_mesh_func)
 
-            self.save_mesh(
-                f"it{self.true_global_step}/{batch['uid'][0]}_{batch['sel_idx'][0] if 'sel_idx' in batch.keys() else 0}.obj",
-                mesh_v_f[0][0], mesh_v_f[0][1]
-            )
+            # self.save_mesh(
+            #     f"it{self.true_global_step}/{batch['uid'][0]}_{batch['sel_idx'][0] if 'sel_idx' in batch.keys() else 0}.obj",
+            #     mesh_v_f[0][0], mesh_v_f[0][1]
+            # )
+            torch.save(out["latents"], f"shapenet_bench_output/sanity_check.pt")
 
         return {"val/loss": out["loss_diffusion"]}
  
     @torch.no_grad()
     def sample(self,
-               sample_inputs: Dict[str, Union[torch.FloatTensor, List[str]]],
                sample_times: int = 1,
                steps: Optional[int] = None,
-               guidance_scale: Optional[float] = None,
                eta: float = 0.0,
                seed: Optional[int] = None,
                **kwargs):
-
         if steps is None:
             steps = self.cfg.num_inference_steps
-        if guidance_scale is None:
-            guidance_scale = self.cfg.guidance_scale
-        do_classifier_free_guidance = guidance_scale != 1.0
+        # if guidance_scale is None:
+        #     guidance_scale = self.cfg.guidance_scale
+        # do_classifier_free_guidance = guidance_scale != 1.0
 
-        # conditional encode
-        if "image" in sample_inputs:
-            sample_inputs["image"] = [Image.open(img) if type(img) == str else img for img in sample_inputs["image"]]
-            cond = self.condition.encode_image(sample_inputs["image"])
-            if do_classifier_free_guidance:
-                un_cond = self.condition.empty_image_embeds.repeat(len(sample_inputs["image"]), 1, 1).to(cond)
-                cond = torch.cat([un_cond, cond], dim=0)
-        elif "mvimages" in sample_inputs: # by default 4 views
-            bs = len(sample_inputs["mvimages"])
-            cond = []
-            for image in sample_inputs["mvimages"]:
-                if isinstance(image, list) and isinstance(image[0], str):
-                    sample_inputs["image"] = [Image.open(img) for img in image] # List[PIL]
-                else:
-                    sample_inputs["image"] = image
-                cond += [self.condition.encode_image(sample_inputs["image"])]
-            cond = torch.stack(cond, dim=0).view(bs, -1, self.cfg.denoiser_model.context_dim)
-            if do_classifier_free_guidance:
-                un_cond = self.condition.empty_image_embeds.unsqueeze(0).repeat(len(sample_inputs["mvimages"]), 1, 1, 1).view(bs, cond.shape[1], self.cfg.denoiser_model.context_dim).to(cond) # shape 为[len(sample_inputs["mvimages"], 4*(num_latents+1), context_dim]
-                cond = torch.cat([un_cond, cond], dim=0).view(bs * 2, -1, cond[0].shape[-1]) 
-        else:
-            raise NotImplementedError("Only image or mvimages condition is supported.")
+        # # conditional encode
+        # if "image" in sample_inputs:
+        #     sample_inputs["image"] = [Image.open(img) if type(img) == str else img for img in sample_inputs["image"]]
+        #     cond = self.condition.encode_image(sample_inputs["image"])
+        #     if do_classifier_free_guidance:
+        #         un_cond = self.condition.empty_image_embeds.repeat(len(sample_inputs["image"]), 1, 1).to(cond)
+        #         cond = torch.cat([un_cond, cond], dim=0)
+        # elif "mvimages" in sample_inputs: # by default 4 views
+        #     bs = len(sample_inputs["mvimages"])
+        #     cond = []
+        #     for image in sample_inputs["mvimages"]:
+        #         if isinstance(image, list) and isinstance(image[0], str):
+        #             sample_inputs["image"] = [Image.open(img) for img in image] # List[PIL]
+        #         else:
+        #             sample_inputs["image"] = image
+        #         cond += [self.condition.encode_image(sample_inputs["image"])]
+        #     cond = torch.stack(cond, dim=0).view(bs, -1, self.cfg.denoiser_model.context_dim)
+        #     if do_classifier_free_guidance:
+        #         un_cond = self.condition.empty_image_embeds.unsqueeze(0).repeat(len(sample_inputs["mvimages"]), 1, 1, 1).view(bs, cond.shape[1], self.cfg.denoiser_model.context_dim).to(cond) # shape 为[len(sample_inputs["mvimages"], 4*(num_latents+1), context_dim]
+        #         cond = torch.cat([un_cond, cond], dim=0).view(bs * 2, -1, cond[0].shape[-1]) 
+        # else:
+        #     raise NotImplementedError("Only image or mvimages condition is supported.")
 
         outputs = []
         latents = None
@@ -268,10 +243,8 @@ class ShapeDiffusionSystem(BaseSystem):
                 self.denoise_scheduler,
                 self.denoiser_model.eval(),
                 shape=self.shape_model.latent_shape,
-                cond=cond,
+                bsz=1,
                 steps=steps,
-                guidance_scale=guidance_scale,
-                do_classifier_free_guidance=do_classifier_free_guidance,
                 device=self.device,
                 eta=eta,
                 disable_prog=False,
@@ -279,9 +252,10 @@ class ShapeDiffusionSystem(BaseSystem):
             )
             for sample, t in sample_loop:
                 latents = sample
-            outputs.append(self.shape_model.decode(latents / self.cfg.z_scale_factor, **kwargs))
+            # outputs.append(self.shape_model.decode(latents / self.cfg.z_scale_factor, **kwargs))
         
-        return outputs
+        # return outputs
+        return latents / self.cfg.z_scale_factor
 
     def on_validation_epoch_end(self):
         pass

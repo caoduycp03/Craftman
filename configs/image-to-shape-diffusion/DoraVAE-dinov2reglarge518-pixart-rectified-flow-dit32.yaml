@@ -27,7 +27,7 @@ data:
   batch_size: 2
   num_workers: 2
 
-system_type: "shape-diffusion-system"
+system_type: "shape-diffusion-nocfg-system"
 system:
   val_samples_json: "val_data/images/val_samples_rgb_image.json"
   z_scale_factor: 1.0
