@@ -237,23 +237,23 @@ def main(args, extras) -> None:
             )
         )()
 
-    trainer = Trainer(
-        callbacks=callbacks,
-        logger=loggers,
-        accelerator="gpu",
-        devices=devices,
-        **cfg.trainer
-        # profiler="pytorch",
-    )
     # trainer = Trainer(
-    #     strategy=DeepSpeedStrategy(config="deepspeed_config.json"),
-    #     accelerator="gpu",
-    #     devices=n_gpus,
     #     callbacks=callbacks,
     #     logger=loggers,
-    #     inference_mode=False,
+    #     accelerator="gpu",
+    #     devices=devices,
     #     **cfg.trainer
+    #     # profiler="pytorch",
     # )
+    trainer = Trainer(
+        strategy=DeepSpeedStrategy(config="deepspeed_config.json"),
+        accelerator="gpu",
+        devices=n_gpus,
+        callbacks=callbacks,
+        logger=loggers,
+        inference_mode=False,
+        **cfg.trainer
+    )
 
     def set_system_status(system: BaseSystem, ckpt_path: Optional[str]):
         if ckpt_path is None:
