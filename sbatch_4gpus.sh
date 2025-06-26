@@ -3,7 +3,7 @@
 #SBATCH --output=sbatch_logs/train_3DDivot_sft_gen_denoiser_4gpus_lamp.log
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=4
-#SBATCH --cpus-per-gpu=16
+#SBATCH --cpus-per-gpu=32
 #SBATCH --mem-per-gpu=40GB
 #SBATCH --partition=movianr
 #SBATCH --mail-type=all # option sendmail: begin,fail.end,requeue,all
