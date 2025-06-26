@@ -104,6 +104,11 @@ class ShapeDiffusionSystem(BaseSystem):
             0 if "table" in uid else 1
             for uid in uids
         ]
+        #null class token for cfg
+        if random.random() < 0.1: 
+            for i in range(len(class_tokens)):
+                class_tokens[i] = self.cfg.num_class
+
         class_tokens = torch.tensor(class_tokens)
         noise_pred = self.denoiser_model(noisy_z, timesteps, class_token=class_tokens)
 

@@ -41,7 +41,7 @@ class PixArtDinoDenoiser(BaseModule):
         super().configure()
 
         # timestep embedding
-        self.class_embed = nn.Embedding(self.cfg.class_dim, self.cfg.width).requires_grad_(True)
+        self.class_embed = nn.Embedding(self.cfg.class_dim+1, self.cfg.width).requires_grad_(True)
         self.time_embed = TimestepEmbedder(self.cfg.width)
 
         # x embedding
@@ -123,21 +123,15 @@ class PixArtDinoDenoiser(BaseModule):
         """
         B, n_data, _ = model_input.shape
         # 1. time + class
-        t_emb = self.time_embed(timestep)
-        zeros_for_uncond = torch.zeros_like(self.class_embed.weight[0]).unsqueeze(0).to(self.class_embed.weight.device)
-        class_embed = torch.cat([self.class_embed.weight, zeros_for_uncond], dim = 0)        
-        class_emb = class_embed[class_token.to(class_embed.device)]
+        t_emb = self.time_embed(timestep)       
+        class_emb = self.class_embed(class_token.to(self.class_embed.device))
         # 4. denoiser
         latent = self.x_embed(model_input)
         # visual_cond = torch.zeros_like(latent).to(device=latent.device, dtype=latent.dtype)
         
-        if zeros_for_uncond in class_emb:
-            c0 = self.c_block(class_emb).unsqueeze(dim=1)
-            c0[0] = 0
-        else:
-            c0 = self.c_block(class_emb).unsqueeze(dim=1)
-        
+        c0 = self.c_block(class_emb).unsqueeze(dim=1)
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
+        
         latent = self.denoiser(latent, t0, c0)
         condition_latent = t_emb + class_emb
         latent = self.final_layer(latent, condition_latent)
