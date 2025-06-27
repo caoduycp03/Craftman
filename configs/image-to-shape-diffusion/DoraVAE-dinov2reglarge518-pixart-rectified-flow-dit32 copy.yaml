@@ -27,7 +27,7 @@ data:
   batch_size: 2
   num_workers: 2
 
-system_type: "shape-rectified-flow-system
+system_type: "shape-diffusion-nocfg-system"
 system:
   val_samples_json: "val_data/images/val_samples_rgb_image.json"
   z_scale_factor: 1.0
@@ -72,7 +72,7 @@ system:
     image_size_dino: 224
     image_size_clip: 224
 
-  denoiser_model_type: "pixart-denoiser-dit"
+  denoiser_model_type: "pixart-denoiser"
   denoiser_model:
     input_channels: ${system.shape_model.embed_dim}
     output_channels:  ${system.shape_model.embed_dim}
@@ -84,15 +84,24 @@ system:
     init_scale: 1.0
     use_checkpoint: false
 
-  noise_scheduler_type: diffusers.schedulers.FlowMatchEulerDiscreteScheduler
+  noise_scheduler_type: "diffusers.schedulers.DDPMScheduler"
   noise_scheduler:
     num_train_timesteps: 1000
-    shift: 3.0
-    
-  denoise_scheduler_type: diffusers.schedulers.FlowMatchEulerDiscreteScheduler
+    beta_start: 0.00085
+    beta_end: 0.012
+    beta_schedule: "scaled_linear"
+    variance_type: "fixed_small"
+    clip_sample: false
+
+  denoise_scheduler_type: "diffusers.schedulers.DDIMScheduler"
   denoise_scheduler:
     num_train_timesteps: 1000
-    shift: 3.0
+    beta_start: 0.00085
+    beta_end: 0.012
+    beta_schedule: "scaled_linear"
+    clip_sample: false   # clip sample to -1~1
+    set_alpha_to_one: false
+    steps_offset: 1
     
   loggers:
     wandb:

@@ -171,7 +171,7 @@ class ShapeDiffusionSystem(BaseSystem):
             sample_outputs = self.sample()
             
             for i, sample_output in enumerate(sample_outputs):
-                torch.save(sample_output, f"shapenet_bench_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
+                torch.save(sample_output, f"shape_diffusion_nocfg_output/it{self.true_global_step}_{batch['uid'][i]}.pt")
             # for i, sample_output in enumerate(sample_outputs):
             #     breakpoint()
             #     mesh_v_f, has_surface = self.shape_model.extract_geometry(sample_output, octree_depth=7, extract_mesh_func=self.cfg.extract_mesh_func)
@@ -190,7 +190,7 @@ class ShapeDiffusionSystem(BaseSystem):
             #     f"it{self.true_global_step}/{batch['uid'][0]}_{batch['sel_idx'][0] if 'sel_idx' in batch.keys() else 0}.obj",
             #     mesh_v_f[0][0], mesh_v_f[0][1]
             # )
-            torch.save(out["latents"], f"shapenet_bench_output/sanity_check.pt")
+            torch.save(out["latents"], f"shape_diffusion_nocfg_output/sanity_check.pt")
 
         return {"val/loss": out["loss_diffusion"]}
  
