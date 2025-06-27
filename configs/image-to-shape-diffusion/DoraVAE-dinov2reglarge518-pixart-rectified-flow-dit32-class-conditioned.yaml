@@ -116,7 +116,7 @@ system:
     lambda_diffusion: 1.
 
   optimizer:
-    name: AdamW
+    name: DeepSpeedCPUAdam
     args:
       lr: 1.e-4
       betas: [0.9, 0.99]
