@@ -5,14 +5,6 @@
             "device": "cpu",
             "pin_memory": true
         },
-        "optimizer": {
-            "type": "DeepSpeedCPUAdam",
-            "params": {
-              "lr": 1e-4,
-              "betas": [0.9, 0.99],
-              "eps": 1e-6
-            }
-          },
         "allgather_partitions": true,
         "allgather_bucket_size": 2e8,
         "overlap_comm": true,
@@ -21,7 +13,16 @@
         "contiguous_gradients": true,
         "ignore_unused_parameters": true
     },
-
+    
+    "optimizer": {
+        "type": "DeepSpeedCPUAdam",
+        "params": {
+          "lr": 1e-4,
+          "betas": [0.9, 0.99],
+          "eps": 1e-6
+        }
+      },
+      
     "steps_per_print": 1,
     "train_batch_size": 8,
     "train_micro_batch_size_per_gpu": 4,
