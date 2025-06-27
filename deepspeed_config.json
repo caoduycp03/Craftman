@@ -1,6 +1,10 @@
 {
     "zero_optimization": {
         "stage": 2,
+        "offload_optimizer": {
+            "device": "cpu",
+            "pin_memory": true
+        },
         "allgather_partitions": true,
         "allgather_bucket_size": 2e8,
         "overlap_comm": true,
@@ -20,7 +24,7 @@
       },
       
     "steps_per_print": 1,
-    "train_batch_size": 8,
-    "train_micro_batch_size_per_gpu": 4,
+    "train_batch_size": 16,
+    "train_micro_batch_size_per_gpu": 8,
     "wall_clock_breakdown": false
 }
