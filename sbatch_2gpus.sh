@@ -15,7 +15,7 @@ eval "$(conda shell.bash hook)"
 conda activate /lustre/scratch/client/movian/research/users/duycd/.conda/envs/Craftman
 
 export CUDA_HOME=/lustre/scratch/client/movian/research/users/ducvh5/cuda-12.4
-python train.py --config ./configs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32-class-conditioned.yaml --train --gpu 0,1
+python train_nods.py --config ./configs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32-class-conditioned_nods.yaml --train --gpu 0,1
 
 python -m torch.distributed.launch \
     --nproc_per_node=2 \
