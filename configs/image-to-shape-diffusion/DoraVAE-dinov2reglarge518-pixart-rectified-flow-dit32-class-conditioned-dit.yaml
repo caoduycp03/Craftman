@@ -138,7 +138,7 @@ trainer:
   check_val_every_n_epoch: 1
   enable_progress_bar: true
   precision: bf16-mixed
-  # strategy: ddp_find_unused_parameters_true
+  strategy: ddp_find_unused_parameters_true
 
 checkpoint:
   save_last: true

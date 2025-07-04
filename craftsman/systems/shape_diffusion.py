@@ -195,7 +195,7 @@ class ShapeDiffusionSystem(BaseSystem):
 
         out = self(batch)
         if self.global_step == 0:
-            torch.save(out["latents"], f"shapenet_class_condtioned/sanity_check.pt")
+            torch.save(out["latents"], f"shapenet_class_condtioned_dit/sanity_check.pt")
 
         return {"val/loss": out["loss_diffusion"]}
  
