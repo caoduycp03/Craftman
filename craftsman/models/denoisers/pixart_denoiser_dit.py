@@ -40,6 +40,7 @@ class PixArtDinoDenoiser(BaseModule):
         super().configure()
 
         # timestep embedding
+        self.class_embed = nn.Embedding(self.cfg.class_dim+1, self.cfg.width).requires_grad_(True)
         self.time_embed = TimestepEmbedder(self.cfg.width)
 
         # x embedding
@@ -84,7 +85,10 @@ class PixArtDinoDenoiser(BaseModule):
                         nn.SiLU(),
                         nn.Linear(self.cfg.width, 6 * self.cfg.width, bias=True)
                     )
-        
+        self.c_block = nn.Sequential(
+                        nn.SiLU(),
+                        nn.Linear(self.cfg.width, self.cfg.width, bias=True)
+                    )
          # final layer
         self.final_layer = T2IFinalLayer(self.cfg.width, self.cfg.output_channels, self.cfg.use_RMSNorm)
 
@@ -112,7 +116,8 @@ class PixArtDinoDenoiser(BaseModule):
 
     def forward(self,
                 model_input: torch.FloatTensor,
-                timestep: torch.LongTensor):
+                timestep: torch.LongTensor,
+                class_token: torch.Tensor = None):
 
         r"""
         Args:
@@ -128,31 +133,18 @@ class PixArtDinoDenoiser(BaseModule):
 
         # 1. time
         t_emb = self.time_embed(timestep)
-
-        # 2. conditions projector
-        # context = context.view(B, self.cfg.n_views, -1, self.cfg.context_dim)
-        # if self.cfg.condition_type == "clip_dinov2":
-        #     clip_feat, dino_feat = context.chunk(2, dim=2)
-        #     clip_cond = self.clip_embed(clip_feat.contiguous().view(B, -1, self.cfg.context_dim))
-        #     dino_cond = self.dino_embed(dino_feat.contiguous().view(B, -1, self.cfg.context_dim))
-        #     visual_cond = self.cfg.clip_weight * clip_cond + self.cfg.dino_weight * dino_cond
-        # elif self.cfg.condition_type == "clip":
-        #     clip_cond = self.clip_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
-        #     visual_cond = clip_cond
-        # elif self.cfg.condition_type == "dinov2":
-        #     dino_cond = self.dino_embed(context.contiguous().view(B, -1, self.cfg.context_dim))
-        #     visual_cond = dino_cond
-        # else:
-        #     raise NotImplementedError(f"condition type {self.cfg.condition_type} not implemented")
+        class_emb = self.class_embed(class_token.to(self.class_embed.weight.device))
 
         # 4. denoiser
         latent = self.x_embed(model_input)
-        visual_cond = torch.zeros_like(latent).to(device=latent.device, dtype=latent.dtype)
 
+        c0 = self.c_block(class_emb).unsqueeze(dim=1)
         t0 = self.t_block(t_emb).unsqueeze(dim=1)
+        
         for block in self.blocks:
-            latent = auto_grad_checkpoint(block, latent, visual_cond, t0)
+            latent = auto_grad_checkpoint(block, latent, c0, t0)
 
-        latent = self.final_layer(latent, t_emb)
-
+        condition_latent = t_emb + class_emb
+        latent = self.final_layer(latent, condition_latent)
+        
         return latent

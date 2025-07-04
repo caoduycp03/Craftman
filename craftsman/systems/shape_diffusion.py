@@ -176,22 +176,22 @@ class ShapeDiffusionSystem(BaseSystem):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        cfgs = [1.0, 3.0, 7.5]
-        cfg = random.choice(cfgs)
         self.eval()
-        os.makedirs(f"shapenet_class_condtioned", exist_ok=True)
-
-        if get_rank() == 0:
-            uids = batch['uid']
-            class_tokens = [
-                0 if "table" in uid else 1
-                for uid in uids
-            ]
-            class_tokens = torch.tensor(class_tokens)
-            sample_outputs = self.sample(class_token=class_tokens, guidance_scale=cfg)
-            
-            for i, sample_output in enumerate(sample_outputs):
-                torch.save(sample_output, f"shapenet_class_condtioned/it{self.true_global_step}_{batch['uid'][i]}_cfg{cfg}.pt")
+        os.makedirs(f"shapenet_class_condtioned_dit", exist_ok=True)        
+        cfgs = [1.0, 2.0, 3.0, 5.0, 7.5]
+        # cfg = random.choice(cfgs)
+        for cfg in cfgs:
+            if get_rank() == 0:
+                uids = batch['uid']
+                class_tokens = [
+                    0 if "table" in uid else 1
+                    for uid in uids
+                ]
+                class_tokens = torch.tensor(class_tokens)
+                sample_outputs = self.sample(class_token=class_tokens, guidance_scale=cfg)
+                
+                for i, sample_output in enumerate(sample_outputs):
+                    torch.save(sample_output, f"shapenet_class_condtioned_dit/it{self.true_global_step}_{batch['uid'][i]}_cfg{cfg}.pt")
 
         out = self(batch)
         if self.global_step == 0:
