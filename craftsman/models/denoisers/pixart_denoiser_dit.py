@@ -18,6 +18,7 @@ class PixArtDinoDenoiser(BaseModule):
         pretrained_model_name_or_path: Optional[str] = None
         input_channels: int = 32
         output_channels: int = 32
+        class_dim: int = 2
         n_ctx: int = 512
         width: int = 768
         layers: int = 28
