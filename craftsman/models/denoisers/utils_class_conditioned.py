@@ -185,7 +185,7 @@ class QwenVLDenoiser(nn.Module):
             return_dict=True,
             past_key_values=past_key_values,
         )
-        output = output_lm.last_hidden_state
+        output = output_lm.hidden_states[-1]
 
         recon_3d_embeds = output[:, -self.embeds_3d_len:, :] #bz x n_3d_tokens x dim
         return recon_3d_embeds
