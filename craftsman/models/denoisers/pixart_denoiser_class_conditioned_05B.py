@@ -76,7 +76,7 @@ class PixArtDinoDenoiser(BaseModule):
             low_cpu_mem_usage=True,
             local_files_only=False,
             use_flash_attn=True,
-            trust_remote_code=True
+            trust_remote_code=True,
             cache_dir="./models_cache",
             resume_download=True
         )
