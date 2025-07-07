@@ -73,7 +73,7 @@ system:
     image_size_dino: 224
     image_size_clip: 224
 
-  denoiser_model_type: "pixart-denoiser-class-conditioned-0.5B"
+  denoiser_model_type: "pixart-denoiser-class-conditioned-05B"
   denoiser_model:
     input_channels: ${system.shape_model.embed_dim}
     output_channels:  ${system.shape_model.embed_dim}
