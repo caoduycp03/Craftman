@@ -79,7 +79,7 @@ system:
     output_channels:  ${system.shape_model.embed_dim}
     n_ctx: ${system.shape_model.num_latents}
     class_dim: 2
-    width: 2048
+    width: 896
     layers: 32
     heads: 16
     context_dim: 1024

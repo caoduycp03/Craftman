@@ -85,7 +85,7 @@ class PixArtDinoDenoiser(BaseModule):
         llm.gradient_checkpointing_enable()
         llm.config.use_cache = False
         
-        self.denoiser = QwenVLDenoiser(llm=llm.model)
+        self.denoiser = QwenVLDenoiser(llm=llm.language_model)
 
         self.t_block = nn.Sequential(
                         nn.SiLU(),
