@@ -1,5 +1,4 @@
-tag: "${rmspace:${system.shape_model_type}+n${data.n_samples}+pfeat${system.shape_model.point_feats}+lr${system.optimizer.args.lr},_}"
-exp_root_dir: "class_conditioned_outputs_nods"
+exp_root_dir: "class_conditioned_outputs_nods_0.5B"
 name: "image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32"
 tag: "${rmspace:${system.shape_model_type}+n${data.n_samples}+pfeat${system.shape_model.point_feats}+lr${system.optimizer.args.lr},_}"
 seed: 0
@@ -74,7 +73,7 @@ system:
     image_size_dino: 224
     image_size_clip: 224
 
-  denoiser_model_type: "pixart-denoiser-class-conditioned"
+  denoiser_model_type: "pixart-denoiser-class-conditioned-0.5B"
   denoiser_model:
     input_channels: ${system.shape_model.embed_dim}
     output_channels:  ${system.shape_model.embed_dim}
@@ -129,7 +128,7 @@ system:
       T_max: 1902000
       eta_min: 1e-5
 
-resume: class_conditioned_outputs_nods/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32/dora-autoencoder+n16384+pfeat3+lr0.0001/ckpts/last.ckpt
+# resume: class_conditioned_outputs_nods/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32/dora-autoencoder+n16384+pfeat3+lr0.0001/ckpts/last.ckpt
 
 trainer:
   num_nodes: 1
