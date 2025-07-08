@@ -177,7 +177,7 @@ class ShapeDiffusionSystem(BaseSystem):
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         self.eval()
-        os.makedirs(f"shapenet_class_condtioned_0.5B", exist_ok=True)        
+        os.makedirs(f"shapenet_class_condtioned_0.5B_real", exist_ok=True)        
         cfgs = [1.0, 2.0, 3.0, 5.0, 7.5]
         # cfg = random.choice(cfgs)
         for cfg in cfgs:
@@ -191,11 +191,11 @@ class ShapeDiffusionSystem(BaseSystem):
                 sample_outputs = self.sample(class_token=class_tokens, guidance_scale=cfg)
                 
                 for i, sample_output in enumerate(sample_outputs):
-                    torch.save(sample_output, f"shapenet_class_condtioned_0.5B/it{self.true_global_step}_{batch['uid'][i]}_cfg{cfg}.pt")
+                    torch.save(sample_output, f"shapenet_class_condtioned_0.5B_real/it{self.true_global_step}_{batch['uid'][i]}_cfg{cfg}.pt")
 
         out = self(batch)
         if self.global_step == 0:
-            torch.save(out["latents"], f"shapenet_class_condtioned_0.5B/sanity_check.pt")
+            torch.save(out["latents"], f"shapenet_class_condtioned_0.5B_real/sanity_check.pt")
 
         return {"val/loss": out["loss_diffusion"]}
  
