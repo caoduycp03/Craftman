@@ -78,7 +78,6 @@ class PixArtDinoDenoiser(BaseModule):
             cache_dir="./models_cache",
             resume_download=True
         )
-        breakpoint()
         llm.gradient_checkpointing_enable()
         llm.config.use_cache = False
         self.denoiser = QwenVLDenoiser(llm=llm)
