@@ -1,4 +1,4 @@
-exp_root_dir: "class_conditioned_outputs_nods_0.5B"
+exp_root_dir: "class_conditioned_outputs_nods_0.6B"
 name: "image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32"
 tag: "${rmspace:${system.shape_model_type}+n${data.n_samples}+pfeat${system.shape_model.point_feats}+lr${system.optimizer.args.lr},_}"
 seed: 0
@@ -73,7 +73,7 @@ system:
     image_size_dino: 224
     image_size_clip: 224
 
-  denoiser_model_type: "pixart-denoiser-class-conditioned-05B"
+  denoiser_model_type: "pixart-denoiser-class-conditioned-06B"
   denoiser_model:
     input_channels: ${system.shape_model.embed_dim}
     output_channels:  ${system.shape_model.embed_dim}
