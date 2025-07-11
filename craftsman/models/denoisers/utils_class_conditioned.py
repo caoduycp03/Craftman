@@ -159,7 +159,7 @@ class QwenVLDenoiser(nn.Module):
     def __init__(self, llm=None) -> None:
         super().__init__()
         self.llm = llm
-        self.embeds_3d_len = 2048
+        self.embeds_3d_len = 1024
         self.initialize_weights()
 
     def initialize_weights(self):
