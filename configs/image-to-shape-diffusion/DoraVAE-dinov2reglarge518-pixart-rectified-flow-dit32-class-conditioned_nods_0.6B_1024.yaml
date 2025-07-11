@@ -118,7 +118,7 @@ system:
   optimizer:
     name: AdamW
     args:
-      lr: 1.e-4
+      lr: 1.e-5
       betas: [0.9, 0.99]
       eps: 1.e-6
 
