@@ -95,7 +95,7 @@ class ShapeDiffusionSystem(BaseSystem):
             device=latents.device,
         )
         timesteps = timesteps.long()
-
+        breakpoint()
         # 5. add noise
         noisy_z = self.noise_scheduler.add_noise(latents, noise, timesteps)
         # 6. diffusion model forward

@@ -28,4 +28,4 @@ python -m torch.distributed.launch \
     --gpu 0,1
 
 python train_nods.py --config configs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32-class-conditioned-dit.yaml --train --gpu 0,1
-python train_nods.py --config configs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32-class-conditioned_nods_0.6B.yaml --train --gpu 0,1
+python train_nods.py --config configs/image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32-class-conditioned_nods_0.6B_1024.yaml --train --gpu 0,1
