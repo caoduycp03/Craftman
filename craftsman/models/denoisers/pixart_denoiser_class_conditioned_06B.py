@@ -69,7 +69,8 @@ class PixArtDinoDenoiser(BaseModule):
         init_scale = self.cfg.init_scale * math.sqrt(1.0 / self.cfg.width)
         drop_path = [x.item() for x in torch.linspace(0, self.cfg.drop_path, self.cfg.layers)]
         
-        path = "Qwen/Qwen3-1.7B"
+        # path = "Qwen/Qwen3-1.7B"
+        path = "Qwen/Qwen3-30B-A3B"
         llm = AutoModel.from_pretrained(
             path,
             torch_dtype=torch.bfloat16,
