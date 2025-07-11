@@ -1,14 +1,14 @@
-exp_root_dir: "class_conditioned_outputs_nods_0.6B"
+exp_root_dir: "class_conditioned_outputs_nods_0.6B_1024"
 name: "image-to-shape-diffusion/DoraVAE-dinov2reglarge518-pixart-rectified-flow-dit32"
 tag: "${rmspace:${system.shape_model_type}+n${data.n_samples}+pfeat${system.shape_model.point_feats}+lr${system.optimizer.args.lr},_}"
 seed: 0
 
 data_type: "Objaverse-datamodule"
 data:
-  local_dir: ./data_condtioned/data_condtioned
+  local_dir: ./data_condtioned_1024/data_condtioned_1024
   load_geometry: true
   geo_data_type: "sdf" 
-  geo_data_path: ./data_condtioned/data_condtioned
+  geo_data_path: ./data_condtioned_1024/data_condtioned_1024
   sampling_strategy: null
   n_samples: 16384
   

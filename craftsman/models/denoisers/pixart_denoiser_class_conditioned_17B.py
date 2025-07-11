@@ -11,7 +11,7 @@ from typing import Optional
 from craftsman.utils.base import BaseModule
 from craftsman.models.denoisers.utils_class_conditioned import *
 
-@craftsman.register("pixart-denoiser-class-conditioned-06B")
+@craftsman.register("pixart-denoiser-class-conditioned-17B")
 class PixArtDinoDenoiser(BaseModule):
     @dataclass
     class Config(BaseModule.Config):
@@ -69,16 +69,15 @@ class PixArtDinoDenoiser(BaseModule):
         init_scale = self.cfg.init_scale * math.sqrt(1.0 / self.cfg.width)
         drop_path = [x.item() for x in torch.linspace(0, self.cfg.drop_path, self.cfg.layers)]
         
-        path = "Qwen/Qwen3-0.6B"
+        path = "Qwen/Qwen3-1.7B"
         llm = AutoModel.from_pretrained(
             path,
             torch_dtype=torch.bfloat16,
-            local_files_only=True,
+            local_files_only=False,
             trust_remote_code=True,
             cache_dir="./models_cache",
             resume_download=True
         )
-
         llm.gradient_checkpointing_enable()
         llm.config.use_cache = False
         self.denoiser = QwenVLDenoiser(llm=llm)
