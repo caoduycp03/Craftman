@@ -73,12 +73,12 @@ class PixArtDinoDenoiser(BaseModule):
         llm = AutoModel.from_pretrained(
             path,
             torch_dtype=torch.bfloat16,
-            local_files_only=True,
+            local_files_only=False,
             trust_remote_code=True,
             cache_dir="./models_cache",
             resume_download=True
         )
-
+        breakpoint()
         llm.gradient_checkpointing_enable()
         llm.config.use_cache = False
         self.denoiser = QwenVLDenoiser(llm=llm)
