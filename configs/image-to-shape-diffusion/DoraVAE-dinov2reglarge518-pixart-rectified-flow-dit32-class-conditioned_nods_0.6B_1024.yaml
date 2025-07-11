@@ -24,7 +24,7 @@ data:
   background_color: [0.5, 0.5, 0.5]
   marign_pix_dis: 30
 
-  batch_size: 8
+  batch_size: 16
   num_workers: 2
 
 system_type: "shape-diffusion-system-nods"
