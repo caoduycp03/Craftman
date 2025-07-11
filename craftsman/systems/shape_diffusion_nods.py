@@ -137,7 +137,6 @@ class ShapeDiffusionSystem(BaseSystem):
                 mse_loss_weights = mse_loss_weights / snr
             elif self.noise_scheduler.config.prediction_type == "v_prediction":
                 mse_loss_weights = mse_loss_weights / (snr + 1)
-            breakpoint()
             if self.cfg.loss.loss_type == "l1":
                 loss = F.l1_loss(noise_pred, target, reduction="none")
             elif self.cfg.loss.loss_type in ["mse", "l2"]:
