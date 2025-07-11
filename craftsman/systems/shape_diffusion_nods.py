@@ -174,7 +174,6 @@ class ShapeDiffusionSystem(BaseSystem):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        breakpoint()
         self.eval()
         os.makedirs(f"shapenet_class_condtioned_nods_06B_1024", exist_ok=True)
         cfgs = [1.0, 2.0, 3.0, 5.0, 7.5]
