@@ -24,7 +24,7 @@ data:
   background_color: [0.5, 0.5, 0.5]
   marign_pix_dis: 30
 
-  batch_size: 4
+  batch_size: 8
   num_workers: 2
 
 system_type: "shape-diffusion-system-nods"
@@ -118,7 +118,7 @@ system:
   optimizer:
     name: AdamW
     args:
-      lr: 1.e-5
+      lr: 1.e-4
       betas: [0.9, 0.99]
       eps: 1.e-6
 
