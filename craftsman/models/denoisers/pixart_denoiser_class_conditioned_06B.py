@@ -73,7 +73,7 @@ class PixArtDinoDenoiser(BaseModule):
         llm = AutoModel.from_pretrained(
             path,
             torch_dtype=torch.bfloat16,
-            local_files_only=False,
+            local_files_only=True,
             trust_remote_code=True,
             cache_dir="./models_cache",
             resume_download=True
